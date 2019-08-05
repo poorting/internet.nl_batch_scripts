@@ -9,9 +9,12 @@ import json
 import pprint
 
 standard_keys = ['domain', 'score', 'status']
+standard_keys_defaults = {'domain':'<unknown>', 'score':0, 'status':'failed'}
 
 categories_keys_ = { 'mail' : ['ipv6','dnssec', 'auth', 'tls'],
     'web' : ['ipv6','dnssec', 'tls']}
+
+categories_keys_defaults = { 'ipv6':False,'dnssec':False, 'auth':False, 'tls':False}
 
 # Old views
 #views_keys_ = {'mail' : ['tls_available','dkim', 'dmarc', 'spf'],
@@ -22,7 +25,7 @@ categories_keys_ = { 'mail' : ['ipv6','dnssec', 'auth', 'tls'],
 # so essentially views for web are no longer needed
 views_keys_ = {'mail' : ['mail_starttls_tls_available','mail_auth_dkim_exist', 'mail_auth_dmarc_policy', 'mail_auth_spf_policy'],
     'web' : []}
-
+views_keys_defaults = {'mail_starttls_tls_available':0,'mail_auth_dkim_exist':0, 'mail_auth_dmarc_policy':0, 'mail_auth_spf_policy':0}
 
 
 
@@ -70,10 +73,12 @@ def getType(domain, allDomains):
 def getMeasurementType(domains):
     """Determine wether measurement results are for web or mail"""
     measurementType = 'web'
-    testDomain = domains[0]
-    for category in testDomain['categories']:
-        if (category['category'] == 'auth'):
-            measurementType = 'mail'
+    status = 'failed'
+    for testDomain in domains:
+        if (testDomain['status'] == 'ok'):
+            for category in testDomain['categories']:
+                if (category['category'] == 'auth'):
+                    measurementType = 'mail'
             break
 
     return measurementType
@@ -117,29 +122,38 @@ def displayJSON(data, allDomains):
         # Omwerken
         csv = {}
         for v in standard_keys:
-            csv[v] = domain[v]
-        dom_cats = domain['categories']
-        for cats in dom_cats:
-            csv[cats['category']] = cats['passed']
-        dom_views = domain['views']
-        for views in dom_views:
-            csv[views['name']] = views['result']
+            if v in domain:
+                csv[v] = domain[v]
+            else:
+                csv[v] = standard_keys_defaults[v]
 
+        if 'categories' in domain:
+            dom_cats = domain['categories']
+            for cats in dom_cats:
+                csv[cats['category']] = cats['passed']
+        else:
+            for v in cat_keys:
+                csv[v] = categories_keys_defaults[v]
+
+        if 'views' in domain:
+            dom_views = domain['views']
+            for views in dom_views:
+                csv[views['name']] = views['result']
+        else:
+            for v in view_keys:
+                csv[v] = views_keys_defaults[v]
+
+        # Print it all out again.
+        # Since we've filled defaults we can safely assume
+        # there's values for everything
         for v in standard_keys:
-            if v in csv:
-                print('{};'.format(csv[v]), end='')
-            else :
-                print('*;', end='')
+            print('{};'.format(csv[v]), end='')
+
         for v in cat_keys:
-            if v in csv:
-                print('{};'.format(int(csv[v])), end='')
-            else :
-                print('*;', end='')
+            print('{};'.format(int(csv[v])), end='')
+
         for v in view_keys:
-            if v in csv:
-                print('{};'.format(int(csv[v])), end='')
-            else :
-                print('*;', end='')
+            print('{};'.format(int(csv[v])), end='')
         print()
 
 
@@ -165,7 +179,6 @@ if len(sys.argv) > 2 :
     else:
         if not domainsFile == '':
             allDomains = fillDomains(domainsFile, allDomains)
-
         displayJSON(data, allDomains)
 
 # All done
