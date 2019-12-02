@@ -79,7 +79,10 @@ The 'result-to-xlsx' script can be used to convert the JSON file to an .xlsx fil
 ./result-to-xlsx.py  <JSON results file|JSON results directory> [domains xlsx file] [metadata_column_name[,md_col_name2, ...]]
 ```
 The first argument is the JSON file you just created by redirecting the output. You can also refer to a directory in which case the script will convert all the .json files it finds there. Optionally you can specify the domains .xlsx file you used to submit the measurement. If you specify a domains file then the script will add the 'type' information from that file (from the column of the same name) to every domain it reads the results of. If you don't need some sort of organisation into groups or types for further processing then there is no need to specify the domains file, but if you would like that information present in the resulting .xlsx (for example because you want to order the result by type), then obviously you do need to specify it. You can specify multiple columns from the domains xlsx file to be combined in this way by separating the column names with a comma. As an example: to combine the Name and type with the measurement results the command would be something like this:
+
+```
 ./results-to-xslx.py test.json domains/domains.xlsx type,Name
+```
 
 The script will automatically detect if the results are for a web or a mail type measurement.
 
