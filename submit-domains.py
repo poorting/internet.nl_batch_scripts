@@ -6,49 +6,28 @@ import os
 import csv
 import requests
 import json
+import pandas as pd
+import math
 
 import pprint
 
-def fillDomains(filename, domains):
-    """Fill domains dictionary from a CSV file and return it."""
-    with open(filename, 'r') as csvfile:
-        reader = csv.reader(csvfile, delimiter=';', quotechar='|')
-        # skip row containing column headers
-        row = reader.__next__()
-            #        if row:
-        for row in reader:
-            if row[1]:
-                if not row[1] in domains:
-                    domains[row[1]] = {}
-                domains[row[1]]['mail'] = True
-                domains[row[1]]['type'] = row[2]
-                if row[3]:
-                    domains[row[1]]['name'] = row[3]
-
-            if row[0]:
-                if not row[0] in domains:
-                    domains[row[0]] = {}
-                domains[row[0]]['web'] = True
-                domains[row[0]]['type'] = row[2]
-                if row[3]:
-                    domains[row[0]]['name'] = row[3]
-    return domains;
-
 def filterDomains(allDomains, name= 'test', type = 'web'):
-    """Retrieve all domains of a specific type (mail or web) from domains dictionary"""
+    """Retrieve all domains of a specific type (mail or web) from domains Dataframe"""
     typeDomains = {}
     typeDomains['name'] = name
-    typeDomains['domains'] = []
+#    typeDomains['domains'] = []
 
-    for domain, metadata in allDomains.items():
-        if type in metadata:
-            typeDomains['domains'].append(domain)
+    pp = pprint.PrettyPrinter(indent=4)
 
+    # Simply get the column with the same name as the measurement type
+    if type in allDomains.columns:
+        domains = allDomains[type].dropna().tolist()
+        typeDomains['domains'] = domains
     return typeDomains
 
 def readCredentials(filename = 'credentials'):
     """Find login  password for batch.internet.nl from a netrc formatted file"""
-    credentials = {'login': '', 'password':''}
+    credentials = {'login':'', 'password':''}
     words=[];
     with open(filename, 'r') as creds:
         for line in creds:
@@ -75,21 +54,21 @@ def writeGetResults(name, url):
     os.chmod(name, st.st_mode | stat.S_IEXEC)
 
 #############################################
+pp = pprint.PrettyPrinter(indent=4)
 
 if len(sys.argv) < 2 :
     print ('Usage: ')
-    print (sys.argv[0], ' <mail|web> [name = \'Test\'] [domains CSV file = \'domains/domains.csv\']', )
+    print (sys.argv[0], ' <mail|web> [name = \'Test\'] [domains file = \'domains/domains.xlsx\']', )
     quit(1)
 
 
-domainsfile = 'domains/domains.csv'
+domainsfile = 'domains/domains.xlsx'
 name = 'Test'
 web = 'https://batch.internet.nl/api/batch/v1.1/web/'
 mail = 'https://batch.internet.nl/api/batch/v1.1/mail/'
 reqapi = web
 allDomains = {}
-
-pp = pprint.PrettyPrinter(indent=4)
+domains = pd.DataFrame()
 
 type = sys.argv[1]
 if len(sys.argv) > 2 :
@@ -106,27 +85,30 @@ except Exception as e:
     exit(1)
 
 try:
-    allDomains = fillDomains(domainsfile, allDomains)
+    domains = pd.read_excel(domainsfile, sheet_name=0)
 except Exception as e:
-    print("error processing domains CSV file: {}".format(e))
+    print("error processing domains Excel file: {}".format(e))
     exit(1)
 
-submitDomains = filterDomains(allDomains, type=type, name=name)
-
-#pp.pprint(submitDomains)
+submitDomains = filterDomains(domains, type=type, name=name)
 
 if type == 'mail':
     reqapi = mail
 
-r = requests.post(reqapi, json=submitDomains, auth=(credentials['login'], credentials['password']) )
+if 'domains' in submitDomains:
+    r = requests.post(reqapi, json=submitDomains, auth=(credentials['login'], credentials['password']) )
 
-if r.status_code == 200 or r.status_code == 201:
-    print('{}\n{}'.format(name, r.json()['data']['results']))
-    try:
-        writeGetResults('getResult-{}-{}'.format(name, type), r.json()['data']['results'])
-    except Exception as e:
-        print("error writing getresults file: {}".format(e))
+    if r.status_code == 200 or r.status_code == 201:
+        print('{}\n{}'.format(name, r.json()['data']['results']))
+        try:
+            writeGetResults('getResult-{}-{}'.format(name, type), r.json()['data']['results'])
+            print('Retrieve results by calling ./getResult-{}-{}'.format(name, type))
+        except Exception as e:
+            print("error writing getresults file: {}".format(e))
+    else:
+        print('Something went wrong! (Error = {})'.format(r.status_code))
 else:
-    print('Something went wrong! (Error = {})'.format(r.status_code))
+    pp.pprint("NO domains (column) found of type/name \'{}\' !".format(type))
+
 
 # All done
