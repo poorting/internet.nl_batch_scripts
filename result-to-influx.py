@@ -32,7 +32,7 @@ def getMeasurementType(domains):
     return measurementType
 
 
-def displayInflux(data, domains_metadata, columns_to_add=['type']):
+def JSONtoInflux(data, domains_metadata, columns_to_add=['type']):
     """Display the results as a CSV file ready for import by influxdb"""
 
 #    pp = pprint.PrettyPrinter(indent=4)
@@ -48,7 +48,8 @@ def displayInflux(data, domains_metadata, columns_to_add=['type']):
     # Set index on pandas dataframe as the measurement type.
     # That column contains the domains as used in the measurements
     measurementType = getMeasurementType(domains)
-    domains_metadata = domains_metadata.set_index(measurementType, inplace=False)
+    if not domains_metadata.empty:
+        domains_metadata = domains_metadata.set_index(measurementType, inplace=False)
 
 #    pp.pprint(domains_metadata)
 
@@ -127,7 +128,7 @@ if len(sys.argv) < 2 :
 # Create empty dataframe
 domains = pd.DataFrame()
 domainsFile=''
-columns_to_add=['type']
+columns_to_add=[]
 
 if len(sys.argv) > 2 :
     domainsFile = sys.argv[2]
@@ -163,6 +164,6 @@ except Exception as e:
 
 for fn in filelist:
     data = openJSON(fn)
-    displayInflux(data, domains, columns_to_add)
+    JSONtoInflux(data, domains, columns_to_add)
 
 # All done

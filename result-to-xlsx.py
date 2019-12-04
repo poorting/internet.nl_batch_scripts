@@ -33,7 +33,7 @@ def getMeasurementType(domains):
     return measurementType
 
 
-def JSONtoDF(data, domains_metadata, columns_to_add=['type']):
+def JSONtoDF(data, domains_metadata, columns_to_add=[]):
     """Rework the JSON results to a DataFrame with the added metadata from the domains file"""
 
     pp = pprint.PrettyPrinter(indent=4)
@@ -60,8 +60,8 @@ def JSONtoDF(data, domains_metadata, columns_to_add=['type']):
     # Set index on pandas dataframe as the measurement type.
     # That column contains the domains as used in the measurements
     measurementType = getMeasurementType(domains)
-    domains_metadata = domains_metadata.set_index(measurementType, inplace=False)
-
+    if not domains_metadata.empty:
+        domains_metadata = domains_metadata.set_index(measurementType, inplace=False)
 
     for domainresults in domains:
         domain = domainresults['domain']
@@ -122,10 +122,11 @@ if len(sys.argv) < 2 :
 # Create empty dataframe
 domains = pd.DataFrame()
 domainsFile=''
-columns_to_add=['type']
+columns_to_add=[]
 
 if len(sys.argv) > 2 :
     domainsFile = sys.argv[2]
+    columns_to_add=['type']
 
 if len(sys.argv) > 3 :
     columns_to_add = sys.argv[3].split(',')
