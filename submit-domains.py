@@ -15,7 +15,7 @@ def filterDomains(allDomains, name= 'test', type = 'web'):
     """Retrieve all domains of a specific type (mail or web) from domains Dataframe"""
     typeDomains = {}
     typeDomains['name'] = name
-#    typeDomains['domains'] = []
+    typeDomains['type'] = type
 
     pp = pprint.PrettyPrinter(indent=4)
 
@@ -25,8 +25,8 @@ def filterDomains(allDomains, name= 'test', type = 'web'):
         typeDomains['domains'] = domains
     return typeDomains
 
-def readCredentials(filename = 'credentials'):
-    """Find login  password for batch.internet.nl from a netrc formatted file"""
+def readCredentials(machine = 'batch.internet.nl', filename = 'credentials'):
+    """Find login  password for machine from a netrc formatted file"""
     credentials = {'login':'', 'password':''}
     words=[];
     with open(filename, 'r') as creds:
@@ -36,7 +36,7 @@ def readCredentials(filename = 'credentials'):
 
     for i in range(0, len(words), 6):
         endpoint = words[i:i+6]
-        if endpoint[1].endswith('batch.internet.nl'):
+        if endpoint[1].endswith(machine):
             credentials[endpoint[2]] = endpoint[3]
             credentials[endpoint[4]] = endpoint[5]
             break;
@@ -58,15 +58,14 @@ pp = pprint.PrettyPrinter(indent=4)
 
 if len(sys.argv) < 2 :
     print ('Usage: ')
-    print (sys.argv[0], ' <mail|web> [name = \'Test\'] [domains file = \'domains/domains.xlsx\']', )
+    print (sys.argv[0], ' <mail|web> [name = \'Test\'] [domains file = \'domains/domains.xlsx\'] [sheet_name=0]', )
     quit(1)
 
 
 domainsfile = 'domains/domains.xlsx'
 name = 'Test'
-web = 'https://batch.internet.nl/api/batch/v1.1/web/'
-mail = 'https://batch.internet.nl/api/batch/v1.1/mail/'
-reqapi = web
+batchapi = 'https://batch.internet.nl/api/batch/v2'
+sheet_name = 0
 allDomains = {}
 domains = pd.DataFrame()
 
@@ -78,6 +77,9 @@ if len(sys.argv) > 2 :
 if len(sys.argv) > 3 :
     domainsfile = sys.argv[3]
 
+if len(sys.argv) > 4 :
+    sheet_name = sys.argv[4]
+
 try:
     credentials = readCredentials()
 except Exception as e:
@@ -85,28 +87,22 @@ except Exception as e:
     exit(1)
 
 try:
-    domains = pd.read_excel(domainsfile, sheet_name=0)
+    domains = pd.read_excel(domainsfile, sheet_name=sheet_name)
 except Exception as e:
     print("error processing domains Excel file: {}".format(e))
     exit(1)
 
 submitDomains = filterDomains(domains, type=type, name=name)
 
-if type == 'mail':
-    reqapi = mail
-
 if 'domains' in submitDomains:
-    r = requests.post(reqapi, json=submitDomains, auth=(credentials['login'], credentials['password']) )
+
+    r = requests.post(batchapi+'/requests', json=submitDomains, auth=(credentials['login'], credentials['password']) )
 
     if r.status_code == 200 or r.status_code == 201:
-        print('{}\n{}'.format(name, r.json()['data']['results']))
-        try:
-            writeGetResults('getResult-{}-{}'.format(name, type), r.json()['data']['results'])
-            print('Retrieve results by calling ./getResult-{}-{}'.format(name, type))
-        except Exception as e:
-            print("error writing getresults file: {}".format(e))
+        print('Result = {} - {})'.format(r.status_code, r.json()))
+        # Poll status with get-request script
     else:
-        print('Something went wrong! (Error = {})'.format(r.status_code))
+        print('Something went wrong! (Error = {} - {})'.format(r.status_code, r.text))
 else:
     pp.pprint("NO domains (column) found of type/name \'{}\' !".format(type))
 

@@ -15,10 +15,6 @@ from bokeh.core.properties import AngleSpec
 from bokeh.core.enums import AngleUnits
 from bokeh.palettes import all_palettes
 from bokeh.transform import transform
-#from bokeh.sampledata.autompg import autompg as df
-
-from bokeh.sampledata.unemployment1948 import data
-
 
 paletteR = list(reversed(all_palettes['OrRd'][9]))[1:]
 paletteG = list(reversed(all_palettes['Greens'][9]))[1:]
@@ -36,59 +32,59 @@ sectors = {"WO":paletteR, "HBO":paletteG, "MBO":paletteB, "UMC":paletteRG, "Rese
 # Get all "type" values from measurement mail
 # SHOW TAG VALUES ON "IV-metingen" FROM "mail" WITH KEY = "type"
 
-# Query specific Q, grouped by sector
-#query_web_lastQAll = 'SELECT round(mean("score")) AS "score (web)", round(mean("ipv6")*100) AS "IPv6 (web)", round(mean("dnssec")*100) AS "DNSSEC (web)", round(mean("tls")*100) AS "TLS" FROM "IV-metingen"."autogen"."web" WHERE "q" = {0} GROUP BY "type" ORDER BY time ASC'
-#query_mail_lastQAll = 'SELECT round(mean("score")) AS "score (mail)", round(mean("ipv6")*100) AS "IPv6 (mail)", round(mean("dnssec")*100) AS "DNSSEC (mail)", round(mean("mail_starttls_tls_available")*100) AS "STARTTLS", round(mean("mail_auth_spf_policy")*100) AS "SPF", round(mean("mail_auth_dkim_exist")*100) AS "DKIM", round(mean("mail_auth_dmarc_policy")*100) AS "DMARC" FROM "IV-metingen"."autogen"."mail" WHERE "q" = {0} GROUP BY "type" ORDER BY time ASC'
-
-
 # Query specific Q, grouped by X (rather than sector)
-query_web_lastQ_X = 'SELECT round(mean("score")) AS "score (web)", round(mean("ipv6")*100) AS "IPv6 (web)", round(mean("dnssec")*100) AS "DNSSEC (web)", round(mean("tls")*100) AS "TLS" FROM "IV-metingen"."autogen"."web" WHERE "q" = {0} GROUP BY "{1}" ORDER BY time ASC'
-query_mail_lastQ_X = 'SELECT round(mean("score")) AS "score (mail)", round(mean("ipv6")*100) AS "IPv6 (mail)", round(mean("dnssec")*100) AS "DNSSEC (mail)", round(mean("mail_starttls_tls_available")*100) AS "STARTTLS", round(mean("mail_auth_spf_policy")*100) AS "SPF", round(mean("mail_auth_dkim_exist")*100) AS "DKIM", round(mean("mail_auth_dmarc_policy")*100) AS "DMARC" FROM "IV-metingen"."autogen"."mail" WHERE "q" = {0} GROUP BY "{1}" ORDER BY time ASC'
-
-
-# Query specific Month, grouped by sector
-#query_web_lastMonthAll = 'SELECT round(mean("score")) AS "score (web)", round(mean("ipv6")*100) AS "IPv6 (web)", round(mean("dnssec")*100) AS "DNSSEC (web)", round(mean("tls")*100) AS "TLS" FROM "IV-metingen"."autogen"."web" WHERE "ym" = {0} GROUP BY "type" ORDER BY time ASC'
-#query_mail_lastMonthAll = 'SELECT round(mean("score")) AS "score (mail)", round(mean("ipv6")*100) AS "IPv6 (mail)", round(mean("dnssec")*100) AS "DNSSEC (mail)", round(mean("mail_starttls_tls_available")*100) AS "STARTTLS", round(mean("mail_auth_spf_policy")*100) AS "SPF", round(mean("mail_auth_dkim_exist")*100) AS "DKIM", round(mean("mail_auth_dmarc_policy")*100) AS "DMARC" FROM "IV-metingen"."autogen"."mail" WHERE "ym" = {0} GROUP BY "type" ORDER BY time ASC'
+query_web_lastQ_X = 'SELECT round(mean("score")) AS "score (web)", round(mean("web_ipv6")*100) AS "IPv6 (web)", round(mean("web_dnssec")*100) AS "DNSSEC (web)", round(mean("web_https")*100) AS "TLS" FROM "IV-metingen"."autogen"."web" WHERE "q" = {0} GROUP BY "{1}" ORDER BY time ASC'
+query_mail_lastQ_X = 'SELECT round(mean("score")) AS "score (mail)", round(mean("mail_ipv6")*100) AS "IPv6 (mail)", round(mean("mail_dnssec")*100) AS "DNSSEC (mail)", round(mean("mail_starttls_tls_available")*100) AS "STARTTLS", round(mean("mail_auth_spf_policy")*100) AS "SPF", round(mean("mail_auth_dkim_exist")*100) AS "DKIM", round(mean("mail_auth_dmarc_policy")*100) AS "DMARC" FROM "IV-metingen"."autogen"."mail" WHERE "q" = {0} GROUP BY "{1}" ORDER BY time ASC'
 
 
 # Query last month, grouped by X (rather than sector)
-query_web_lastMonth_X = 'SELECT round(mean("score")) AS "score (web)", round(mean("ipv6")*100) AS "IPv6 (web)", round(mean("dnssec")*100) AS "DNSSEC (web)", round(mean("tls")*100) AS "TLS" FROM "IV-metingen"."autogen"."web" WHERE "ym" = {0} GROUP BY "{1}" ORDER BY time ASC'
-query_mail_lastMonth_X = 'SELECT round(mean("score")) AS "score (mail)", round(mean("ipv6")*100) AS "IPv6 (mail)", round(mean("dnssec")*100) AS "DNSSEC (mail)", round(mean("mail_starttls_tls_available")*100) AS "STARTTLS", round(mean("mail_auth_spf_policy")*100) AS "SPF", round(mean("mail_auth_dkim_exist")*100) AS "DKIM", round(mean("mail_auth_dmarc_policy")*100) AS "DMARC" FROM "IV-metingen"."autogen"."mail" WHERE "ym" = {0} GROUP BY "{1}" ORDER BY time ASC'
+query_web_lastMonth_X = 'SELECT round(mean("score")) AS "score (web)", round(mean("web_ipv6")*100) AS "IPv6 (web)", round(mean("web_dnssec")*100) AS "DNSSEC (web)", round(mean("web_https")*100) AS "TLS" FROM "IV-metingen"."autogen"."web" WHERE "ym" = {0} GROUP BY "{1}" ORDER BY time ASC'
+query_mail_lastMonth_X = 'SELECT round(mean("score")) AS "score (mail)", round(mean("mail_ipv6")*100) AS "IPv6 (mail)", round(mean("mail_dnssec")*100) AS "DNSSEC (mail)", round(mean("mail_starttls_tls_available")*100) AS "STARTTLS", round(mean("mail_auth_spf_policy")*100) AS "SPF", round(mean("mail_auth_dkim_exist")*100) AS "DKIM", round(mean("mail_auth_dmarc_policy")*100) AS "DMARC" FROM "IV-metingen"."autogen"."mail" WHERE "ym" = {0} GROUP BY "{1}" ORDER BY time ASC'
 
 
 # Query for specific Quarter for all domains
-query_detail_web_Q = 'SELECT round("score") AS "score", round("ipv6") AS "IPv6", round("dnssec") AS "DNSSEC", round("tls") AS "TLS" FROM "IV-metingen"."autogen"."web" WHERE "q" = {0} GROUP BY "domain"'
-query_detail_mail_Q = 'SELECT round("score") AS "score", round("ipv6") AS "IPv6", round("dnssec") AS "DNSSEC", round("mail_starttls_tls_available") AS "STARTTLS", round("mail_auth_spf_policy") AS "SPF", round("mail_auth_dkim_exist") AS "DKIM", round("mail_auth_dmarc_policy") AS "DMARC" FROM "IV-metingen"."autogen"."mail" WHERE "q" = {0} GROUP BY "domain"'
+query_detail_web_Q = 'SELECT round("score") AS "score", round("web_ipv6") AS "IPv6", round("web_dnssec") AS "DNSSEC", round("web_https") AS "TLS" FROM "IV-metingen"."autogen"."web" WHERE "q" = {0} GROUP BY "domain"'
+query_detail_mail_Q = 'SELECT round("score") AS "score", round("mail_ipv6") AS "IPv6", round("mail_dnssec") AS "DNSSEC", round("mail_starttls_tls_available") AS "STARTTLS", round("mail_auth_spf_policy") AS "SPF", round("mail_auth_dkim_exist") AS "DKIM", round("mail_auth_dmarc_policy") AS "DMARC" FROM "IV-metingen"."autogen"."mail" WHERE "q" = {0} GROUP BY "domain"'
 
 # Query for specific month for all domains
-query_detail_web_Month = 'SELECT round("score") AS "score", round("ipv6") AS "IPv6", round("dnssec") AS "DNSSEC", round("tls") AS "TLS" FROM "IV-metingen"."autogen"."web" WHERE "ym" = {0} GROUP BY "domain"'
-query_detail_mail_Month = 'SELECT round("score") AS "score", round("ipv6") AS "IPv6", round("dnssec") AS "DNSSEC", round("mail_starttls_tls_available") AS "STARTTLS", round("mail_auth_spf_policy") AS "SPF", round("mail_auth_dkim_exist") AS "DKIM", round("mail_auth_dmarc_policy") AS "DMARC" FROM "IV-metingen"."autogen"."mail" WHERE "ym" = {0} GROUP BY "domain"'
+query_detail_web_Month = 'SELECT round("score") AS "score", round("web_ipv6") AS "IPv6", round("web_dnssec") AS "DNSSEC", round("web_https") AS "TLS" FROM "IV-metingen"."autogen"."web" WHERE "ym" = {0} GROUP BY "domain"'
+query_detail_mail_Month = 'SELECT round("score") AS "score", round("mail_ipv6") AS "IPv6", round("mail_dnssec") AS "DNSSEC", round("mail_starttls_tls_available") AS "STARTTLS", round("mail_auth_spf_policy") AS "SPF", round("mail_auth_dkim_exist") AS "DKIM", round("mail_auth_dmarc_policy") AS "DMARC" FROM "IV-metingen"."autogen"."mail" WHERE "ym" = {0} GROUP BY "domain"'
 
 
 # Query for specific Quarter and sector (type), for all domains
-query_detail_web_Q_Sector = 'SELECT round("score") AS "score", round("ipv6") AS "IPv6", round("dnssec") AS "DNSSEC", round("tls") AS "TLS" FROM "IV-metingen"."autogen"."web" WHERE "q" = {0} AND "type"=\'{1}\' GROUP BY "domain"'
-query_detail_mail_Q_Sector = 'SELECT round("score") AS "score", round("ipv6") AS "IPv6", round("dnssec") AS "DNSSEC", round("mail_starttls_tls_available") AS "STARTTLS", round("mail_auth_spf_policy") AS "SPF", round("mail_auth_dkim_exist") AS "DKIM", round("mail_auth_dmarc_policy") AS "DMARC" FROM "IV-metingen"."autogen"."mail" WHERE "q" = {0} AND "type"=\'{1}\' GROUP BY "domain"'
+query_detail_web_Q_Sector = 'SELECT round("score") AS "score", round("web_ipv6") AS "IPv6", round("web_dnssec") AS "DNSSEC", round("tls") AS "TLS" FROM "IV-metingen"."autogen"."web" WHERE "q" = {0} AND "type"=\'{1}\' GROUP BY "domain"'
+query_detail_mail_Q_Sector = 'SELECT round("score") AS "score", round("mail_ipv6") AS "IPv6", round("mail_dnssec") AS "DNSSEC", round("mail_starttls_tls_available") AS "STARTTLS", round("mail_auth_spf_policy") AS "SPF", round("mail_auth_dkim_exist") AS "DKIM", round("mail_auth_dmarc_policy") AS "DMARC" FROM "IV-metingen"."autogen"."mail" WHERE "q" = {0} AND "type"=\'{1}\' GROUP BY "domain"'
 
 # Query details for specific month and sector (type)
-query_detail_web_Month_Sector = 'SELECT round("score") AS "score", round("ipv6") AS "IPv6", round("dnssec") AS "DNSSEC", round("tls") AS "TLS" FROM "IV-metingen"."autogen"."web" WHERE "ym" = {0} AND "type"=\'{1}\' GROUP BY "domain"'
-query_detail_mail_Month_Sector = 'SELECT round("score") AS "score", round("ipv6") AS "IPv6", round("dnssec") AS "DNSSEC", round("mail_starttls_tls_available") AS "STARTTLS", round("mail_auth_spf_policy") AS "SPF", round("mail_auth_dkim_exist") AS "DKIM", round("mail_auth_dmarc_policy") AS "DMARC" FROM "IV-metingen"."autogen"."mail" WHERE "ym" = {0} AND "type"=\'{1}\' GROUP BY "domain"'
+query_detail_web_Month_Sector = 'SELECT round("score") AS "score", round("web_ipv6") AS "IPv6", round("web_dnssec") AS "DNSSEC", round("web_https") AS "TLS" FROM "IV-metingen"."autogen"."web" WHERE "ym" = {0} AND "type"=\'{1}\' GROUP BY "domain"'
+query_detail_mail_Month_Sector = 'SELECT round("score") AS "score", round("mail_ipv6") AS "IPv6", round("mail_dnssec") AS "DNSSEC", round("mail_starttls_tls_available") AS "STARTTLS", round("mail_auth_spf_policy") AS "SPF", round("mail_auth_dkim_exist") AS "DKIM", round("mail_auth_dmarc_policy") AS "DMARC" FROM "IV-metingen"."autogen"."mail" WHERE "ym" = {0} AND "type"=\'{1}\' GROUP BY "domain"'
 
 
 # Query last Quarters for all
-query_web_lastQs = 'SELECT round(mean("score")) AS "score (web)", round(mean("ipv6")*100) AS "IPv6 (web)", round(mean("dnssec")*100) AS "DNSSEC (web)", round(mean("tls")*100) AS "TLS" FROM "IV-metingen"."autogen"."web" WHERE "q" >= {0} AND "q" <= {1} GROUP BY "quarter" ORDER BY time ASC'
-query_mail_lastQs = 'SELECT round(mean("score")) AS "score (mail)", round(mean("ipv6")*100) AS "IPv6 (mail)", round(mean("dnssec")*100) AS "DNSSEC (mail)", round(mean("mail_starttls_tls_available")*100) AS "STARTTLS", round(mean("mail_auth_spf_policy")*100) AS "SPF", round(mean("mail_auth_dkim_exist")*100) AS "DKIM", round(mean("mail_auth_dmarc_policy")*100) AS "DMARC" FROM "IV-metingen"."autogen"."mail" WHERE "q" >= {0} AND "q" <= {1} GROUP BY "quarter" ORDER BY time ASC'
+query_web_lastQs = 'SELECT round(mean("score")) AS "score (web)", round(mean("web_ipv6")*100) AS "IPv6 (web)", round(mean("web_dnssec")*100) AS "DNSSEC (web)", round(mean("web_https")*100) AS "TLS" FROM "IV-metingen"."autogen"."web" WHERE "q" >= {0} AND "q" <= {1} GROUP BY "quarter" ORDER BY time ASC'
+query_mail_lastQs = 'SELECT round(mean("score")) AS "score (mail)", round(mean("mail_ipv6")*100) AS "IPv6 (mail)", round(mean("mail_dnssec")*100) AS "DNSSEC (mail)", round(mean("mail_starttls_tls_available")*100) AS "STARTTLS", round(mean("mail_auth_spf_policy")*100) AS "SPF", round(mean("mail_auth_dkim_exist")*100) AS "DKIM", round(mean("mail_auth_dmarc_policy")*100) AS "DMARC" FROM "IV-metingen"."autogen"."mail" WHERE "q" >= {0} AND "q" <= {1} GROUP BY "quarter" ORDER BY time ASC'
+
+# Query last Quarters for all, including tls_present, dmarc present, etc. (to compare with government)
+query_web_lastQs_web = 'SELECT round(mean("web_dnssec")*100) AS "DNSSEC", round(mean("web_https_tls_version")*100) AS "TLS", round(mean("web_https")*100) AS "TLS cf NCSC", round(mean("web_https_http_redirect")*100) AS "HTTPS (forced)", round(mean("web_https_http_hsts")*100) AS "HSTS" FROM "IV-metingen"."autogen"."web" WHERE "q" >= {0} AND "q" <= {1} GROUP BY "quarter" ORDER BY time ASC'
+#SELECT round(mean("dnssec")*100) AS "DNSSEC", round(mean("web_https_tls_version")*100) AS "TLS", round(mean("tls")*100) AS "TLS cf NCSC", round(mean("web_https_http_redirect")*100) AS "HTTPS (forced)", round(mean("web_https_http_hsts")*100) AS "HSTS" FROM "IV-metingen"."autogen"."web" WHERE "q" >= 20193 AND "q" <= 20202 GROUP BY "quarter" ORDER BY time ASC
+
+query_mail_lastQs_mail = 'SELECT round(mean("mail_auth_dmarc_exist")*100) AS "DMARC",  round(mean("mail_auth_dkim_exist")*100) AS "DKIM", round(mean("mail_auth_spf_exist")*100) AS "SPF",round(mean("mail_auth_dmarc_policy")*100) AS "DMARC Pol.", round(mean("mail_auth_spf_policy")*100) AS "SPF Pol." FROM "IV-metingen"."autogen"."mail" WHERE "q" >= {0} AND "q" <= {1} GROUP BY "quarter" ORDER BY time ASC'
+
+query_mail_lastQs_mail_conn = 'SELECT round(mean("mail_starttls_tls_available")*100) AS "STARTTLS", round(mean("mail_starttls")*100) AS "STARTTLS cf NCSC", round(mean("mail_dnssec")*100) AS "DNSSEC MX", round(mean("mail_starttls_dane_valid")*100) AS "DANE" FROM "IV-metingen"."autogen"."mail" WHERE "q" >= {0} AND "q" <= {1} GROUP BY "quarter" ORDER BY time ASC'
+
+
 
 # Query last months for all
-query_web_lastMonths = 'SELECT round(mean("score")) AS "score (web)", round(mean("ipv6")*100) AS "IPv6 (web)", round(mean("dnssec")*100) AS "DNSSEC (web)", round(mean("tls")*100) AS "TLS" FROM "IV-metingen"."autogen"."web" WHERE "ym" >= {0} AND "ym" <= {1}  GROUP BY "yearmonth" ORDER BY time ASC'
-query_mail_lastMonths = 'SELECT round(mean("score")) AS "score (mail)", round(mean("ipv6")*100) AS "IPv6 (mail)", round(mean("dnssec")*100) AS "DNSSEC (mail)", round(mean("mail_starttls_tls_available")*100) AS "STARTTLS", round(mean("mail_auth_spf_policy")*100) AS "SPF", round(mean("mail_auth_dkim_exist")*100) AS "DKIM", round(mean("mail_auth_dmarc_policy")*100) AS "DMARC" FROM "IV-metingen"."autogen"."mail" WHERE "ym" >= {0} AND "ym" <= {1} GROUP BY "yearmonth" ORDER BY time ASC'
+query_web_lastMonths = 'SELECT round(mean("score")) AS "score (web)", round(mean("web_ipv6")*100) AS "IPv6 (web)", round(mean("web_dnssec")*100) AS "DNSSEC (web)", round(mean("web_https")*100) AS "TLS" FROM "IV-metingen"."autogen"."web" WHERE "ym" >= {0} AND "ym" <= {1}  GROUP BY "yearmonth" ORDER BY time ASC'
+query_mail_lastMonths = 'SELECT round(mean("score")) AS "score (mail)", round(mean("mail_ipv6")*100) AS "IPv6 (mail)", round(mean("mail_dnssec")*100) AS "DNSSEC (mail)", round(mean("mail_starttls_tls_available")*100) AS "STARTTLS", round(mean("mail_auth_spf_policy")*100) AS "SPF", round(mean("mail_auth_dkim_exist")*100) AS "DKIM", round(mean("mail_auth_dmarc_policy")*100) AS "DMARC" FROM "IV-metingen"."autogen"."mail" WHERE "ym" >= {0} AND "ym" <= {1} GROUP BY "yearmonth" ORDER BY time ASC'
 
 
 
-query_web_lastQs_sector = 'SELECT round(mean("score")) AS "score (web)", round(mean("ipv6")*100) AS "IPv6 (web)", round(mean("dnssec")*100) AS "DNSSEC (web)", round(mean("tls")*100) AS "TLS" FROM "IV-metingen"."autogen"."web" WHERE "q">={0} AND "q"<={1} AND "type"=\'{2}\' GROUP BY "quarter"'
-query_mail_lastQs_sector = 'SELECT round(mean("score")) AS "score (mail)", round(mean("ipv6")*100) AS "IPv6 (mail)", round(mean("dnssec")*100) AS "DNSSEC (mail)",round(mean("mail_starttls_tls_available")*100) AS "STARTTLS",round(mean("mail_auth_spf_policy")*100) AS "SPF", round(mean("mail_auth_dkim_exist")*100) AS "DKIM", round(mean("mail_auth_dmarc_policy")*100) AS "DMARC" FROM "IV-metingen"."autogen"."mail" WHERE "q">={0} AND "q"<={1} AND "type"=\'{2}\' GROUP BY "quarter"'
+query_web_lastQs_sector = 'SELECT round(mean("score")) AS "score (web)", round(mean("web_ipv6")*100) AS "IPv6 (web)", round(mean("web_dnssec")*100) AS "DNSSEC (web)", round(mean("web_https")*100) AS "TLS" FROM "IV-metingen"."autogen"."web" WHERE "q">={0} AND "q"<={1} AND "type"=\'{2}\' GROUP BY "quarter"'
+query_mail_lastQs_sector = 'SELECT round(mean("score")) AS "score (mail)", round(mean("mail_ipv6")*100) AS "IPv6 (mail)", round(mean("mail_dnssec")*100) AS "DNSSEC (mail)",round(mean("mail_starttls_tls_available")*100) AS "STARTTLS",round(mean("mail_auth_spf_policy")*100) AS "SPF", round(mean("mail_auth_dkim_exist")*100) AS "DKIM", round(mean("mail_auth_dmarc_policy")*100) AS "DMARC" FROM "IV-metingen"."autogen"."mail" WHERE "q">={0} AND "q"<={1} AND "type"=\'{2}\' GROUP BY "quarter"'
 
-query_web_lastMonths_sector = 'SELECT round(mean("score")) AS "score (web)", round(mean("ipv6")*100) AS "IPv6 (web)", round(mean("dnssec")*100) AS "DNSSEC (web)", round(mean("tls")*100) AS "TLS" FROM "IV-metingen"."autogen"."web" WHERE "ym">={0} AND "ym"<={1} AND "type"=\'{2}\' GROUP BY "yearmonth"'
-query_mail_lastMonths_sector = 'SELECT round(mean("score")) AS "score (mail)", round(mean("ipv6")*100) AS "IPv6 (mail)", round(mean("dnssec")*100) AS "DNSSEC (mail)",round(mean("mail_starttls_tls_available")*100) AS "STARTTLS",round(mean("mail_auth_spf_policy")*100) AS "SPF", round(mean("mail_auth_dkim_exist")*100) AS "DKIM", round(mean("mail_auth_dmarc_policy")*100) AS "DMARC" FROM "IV-metingen"."autogen"."mail" WHERE "ym">={0} AND "ym"<={1} AND "type"=\'{2}\' GROUP BY "yearmonth"'
+query_web_lastMonths_sector = 'SELECT round(mean("score")) AS "score (web)", round(mean("web_ipv6")*100) AS "IPv6 (web)", round(mean("web_dnssec")*100) AS "DNSSEC (web)", round(mean("web_https")*100) AS "TLS" FROM "IV-metingen"."autogen"."web" WHERE "ym">={0} AND "ym"<={1} AND "type"=\'{2}\' GROUP BY "yearmonth"'
+query_mail_lastMonths_sector = 'SELECT round(mean("score")) AS "score (mail)", round(mean("mail_ipv6")*100) AS "IPv6 (mail)", round(mean("mail_dnssec")*100) AS "DNSSEC (mail)",round(mean("mail_starttls_tls_available")*100) AS "STARTTLS",round(mean("mail_auth_spf_policy")*100) AS "SPF", round(mean("mail_auth_dkim_exist")*100) AS "DKIM", round(mean("mail_auth_dmarc_policy")*100) AS "DMARC" FROM "IV-metingen"."autogen"."mail" WHERE "ym">={0} AND "ym"<={1} AND "type"=\'{2}\' GROUP BY "yearmonth"'
 
 
 def Nr2Q(q):
@@ -96,7 +92,6 @@ def Nr2Q(q):
 
 def Nr2M(q):
     return '{0}\'{1}'.format(calendar.month_abbr[int(str(q)[-2:])], str(q)[2:4])
-    #return '{0}/{1}'.format(str(q)[:4], str(q)[-2:])
 
 
 def returnBarGraph(df, title=' ', y_label = 'score/percentage', label_suffix='', palette = paletteR ):
@@ -132,12 +127,7 @@ def returnBarGraph(df, title=' ', y_label = 'score/percentage', label_suffix='',
     p.title.align = 'center'
     p.title.text_font_size="12pt"
     p.title.text_font_style="bold"
-#    p.title.offset=0
     p.xaxis.major_label_orientation = math.pi/2
-#    p.axis.major_label_text_font_size = "9pt"
-#    p.xaxis.major_label_orientation = "vertical"
-#    p.xaxis.subgroup_label_orientation = "vertical"
-#    p.xaxis.group_label_orientation = 0.8
     p.xgrid.grid_line_color = None
 
     return p
@@ -156,6 +146,7 @@ def returnHeatmap(df, title=' ', rangemin=0, rangemax=1, palette = paletteHeatma
         if incsign:
             if (score>0):
                 lb='(+'
+
         df.iat[row, 0] = '{0} {1}{2})'.format(domain, lb, score)
         row = row + 1
     df.drop('score', axis=1, inplace=True)
@@ -191,6 +182,7 @@ def returnHeatmap(df, title=' ', rangemin=0, rangemax=1, palette = paletteHeatma
 
     return p
 
+#-------------------
 
 def query_to_dataframe(client, query, measurement, doPrint=False, doPrintIntermediate=False):
 
@@ -199,10 +191,11 @@ def query_to_dataframe(client, query, measurement, doPrint=False, doPrintInterme
     results = client.query(query)
     if doPrintIntermediate:
         print()
-        print('Raw results')
+        print('Query:')
+        print(query)
+        print('Raw results:')
         pp.pprint(results.raw)
 
-    #pp.pprint(results.raw)
     # Get the tags of the results (as a list)
     keys = list(zip(*results.keys()))[1]
     if doPrintIntermediate:
@@ -237,8 +230,7 @@ def query_to_dataframe(client, query, measurement, doPrint=False, doPrintInterme
 
     return df
 
-
-
+#-------------------
 def scoreLastQs(client, startQ=20183, endQ=20193):
 
     pp = pprint.PrettyPrinter(indent=4)
@@ -283,7 +275,50 @@ def scoreLastMonths(client, startMonth=201908, endMonth=201910):
     export_png(p, filename="Scores-O-en-O.png")
     return
 
+#-------------------
+def scoreLastQsWebIV(client, startQ=20183, endQ=20193):
 
+    pp = pprint.PrettyPrinter(indent=4)
+
+    print('Scores Web IV {0} - {1} for all sectors'.format(Nr2Q(startQ), Nr2Q(endQ)))
+    # Take the last X quarters (the one specified and later) for both web and mail
+    df = query_to_dataframe(client, query_web_lastQs_web.format(startQ, endQ), 'web', doPrint=False)
+
+    p = returnBarGraph(df, title='Resultaten IV-web O&O ({0}-{1})'.format(Nr2Q(startQ),Nr2Q(endQ)), palette = paletteBR)
+    p.output_backend="svg"
+    export_svgs(p, filename="Scores-O-en-O-IV-web.svg")
+    export_png(p, filename="Scores-O-en-O-IV-web.png")
+    return
+
+def scoreLastQsMailIV(client, startQ=20183, endQ=20193):
+
+    pp = pprint.PrettyPrinter(indent=4)
+
+    print('Scores Mail IV {0} - {1} for all sectors'.format(Nr2Q(startQ), Nr2Q(endQ)))
+    # Take the last X quarters (the one specified and later) for both web and mail
+    df = query_to_dataframe(client, query_mail_lastQs_mail.format(startQ, endQ), 'mail', doPrint=False)
+
+    p = returnBarGraph(df, title='Resultaten IV-mail O&O ({0}-{1})'.format(Nr2Q(startQ),Nr2Q(endQ)), palette = paletteBR)
+    p.output_backend="svg"
+    export_svgs(p, filename="Scores-O-en-O-IV-mail.svg")
+    export_png(p, filename="Scores-O-en-O-IV-mail.png")
+    return
+
+def scoreLastQsMailConnIV(client, startQ=20183, endQ=20193):
+
+    pp = pprint.PrettyPrinter(indent=4)
+
+    print('Scores Mail (conn.) IV {0} - {1} for all sectors'.format(Nr2Q(startQ), Nr2Q(endQ)))
+    # Take the last X quarters (the one specified and later) for both web and mail
+    df = query_to_dataframe(client, query_mail_lastQs_mail_conn.format(startQ, endQ), 'mail', doPrint=False)
+
+    p = returnBarGraph(df, title='Resultaten IV-mail connection O&O ({0}-{1})'.format(Nr2Q(startQ),Nr2Q(endQ)), palette = paletteBR)
+    p.output_backend="svg"
+    export_svgs(p, filename="Scores-O-en-O-IV-mail-conn.svg")
+    export_png(p, filename="Scores-O-en-O-IV-mail-conn.png")
+    return
+
+#-------------------
 def scoreLastQsPerSector(client, startQ=20183, endQ=20193):
 
     pp = pprint.PrettyPrinter(indent=4)
@@ -291,7 +326,7 @@ def scoreLastQsPerSector(client, startQ=20183, endQ=20193):
     for i, (sector, palette) in enumerate(sectors.items()):
         print('Scores {0} - {1} for {2}'.format(Nr2Q(startQ), Nr2Q(endQ), sector))
         # Take the last X quarters (the one specified and later) for both web and mail
-        dfW = query_to_dataframe(client, query_web_lastQs_sector.format(startQ,endQ,sector), 'web', doPrint=False)
+        dfW = query_to_dataframe(client, query_web_lastQs_sector.format(startQ,endQ,sector), 'web', doPrint=False, doPrintIntermediate=False)
         dfM = query_to_dataframe(client, query_mail_lastQs_sector.format(startQ,endQ,sector), 'mail', doPrint=False)
 
         # Now combine the two dataframes
@@ -300,7 +335,7 @@ def scoreLastQsPerSector(client, startQ=20183, endQ=20193):
             dfM.drop('quarter', axis=1, inplace=True)
         df = pd.concat([dfW, dfM], axis=1)
 
-        p = returnBarGraph(df, title='Resultaten {0}'.format(sector), palette = palette)
+        p = returnBarGraph(df, title='Resultaten {0} ({1}-{2})'.format(sector, Nr2Q(startQ), Nr2Q(endQ)), palette = palette)
         p.output_backend="svg"
         export_svgs(p, filename="Scores-{0}.svg".format(sector))
         export_png(p, filename="Scores-{0}.png".format(sector))
@@ -322,14 +357,15 @@ def scoreLastMonthsPerSector(client, startMonth=201908, endMonth=201910):
             dfM.drop('yearmonth', axis=1, inplace=True)
         df = pd.concat([dfW, dfM], axis=1)
 
-        p = returnBarGraph(df, title='Resultaten {0}'.format(sector), palette = palette)
+        p = returnBarGraph(df, title='Resultaten {0} ({1}-{2})'.format(sector, Nr2M(startMonth), Nr2M(endMonth)), palette = palette)
         p.output_backend="svg"
         export_svgs(p, filename="Scores-{0}.svg".format(sector))
         export_png(p, filename="Scores-{0}.png".format(sector))
     return
 
+#-------------------
 
-def scoreLastQ_X(client, startQ=20183, groupby='SURFdomeinen', palette=paletteHeatmap):
+def scoreLastQ_X(client, startQ=20183, groupby='type', palette=paletteHeatmap):
 
     pp = pprint.PrettyPrinter(indent=4)
 
@@ -351,7 +387,7 @@ def scoreLastQ_X(client, startQ=20183, groupby='SURFdomeinen', palette=paletteHe
     return
 
 
-def scoreLastMonth_X(client, startMonth=201910, groupby='SURFdomeinen', palette=paletteHeatmap):
+def scoreLastMonth_X(client, startMonth=201910, groupby='type', palette=paletteHeatmap):
 
     pp = pprint.PrettyPrinter(indent=4)
 
@@ -372,7 +408,42 @@ def scoreLastMonth_X(client, startMonth=201910, groupby='SURFdomeinen', palette=
     export_png(p, filename="Scores-O-en-O-per-{}.png".format(groupby))
     return
 
+#-------------------
 
+def detailsQ(client, startQ=20193):
+    pp = pprint.PrettyPrinter(indent=4)
+
+    measurements = {'web':query_detail_web_Q, 'mail':query_detail_mail_Q}
+
+
+    for i, (measurement, query) in enumerate(measurements.items()):
+        print('Detailed {0} scores for ({1})'.format(measurement, Nr2Q(startQ)))
+        df = query_to_dataframe(client, query.format(startQ), measurement)
+        df.sort_values(by=['score','domain'], ascending=False, inplace=True)
+        df.reset_index(inplace=True, drop=True)
+        p = returnHeatmap(df, title='Details {0} ({1})'.format(measurement, Nr2Q(startQ)))
+        p.output_backend="svg"
+        export_svgs(p, filename='Details-O-en-O-{0}.svg'.format(measurement))
+        export_png(p, filename='Details-O-en-O-{0}.png'.format(measurement))
+
+def detailsMonth(client, startMonth=201910):
+    pp = pprint.PrettyPrinter(indent=4)
+
+    measurements = {'web':query_detail_web_Month, 'mail':query_detail_mail_Month}
+
+    for i, (measurement, query) in enumerate(measurements.items()):
+        print('Detailed {0} scores ({1})'.format(measurement, Nr2M(startMonth)))
+        df = query_to_dataframe(client, query.format(startMonth), measurement)
+        df.sort_values(by=['score','domain'], ascending=False, inplace=True)
+        df.reset_index(inplace=True, drop=True)
+        p = returnHeatmap(df, title='Details {0} ({1})'.format(measurement, Nr2M(startMonth)))
+        p.output_backend="svg"
+        export_svgs(p, filename='Details-O-en-O-{0}.svg'.format(measurement))
+        export_png(p, filename='Details-O-en-O-{0}.png'.format(measurement))
+
+
+
+#-------------------
 
 def detailsQperSector(client, startQ=20193):
     pp = pprint.PrettyPrinter(indent=4)
@@ -391,6 +462,7 @@ def detailsQperSector(client, startQ=20193):
             export_svgs(p, filename='Details-{0}-{1}.svg'.format(sector,measurement))
             export_png(p, filename='Details-{0}-{1}.png'.format(sector,measurement))
 
+
 def detailsMonthperSector(client, startMonth=201910):
     pp = pprint.PrettyPrinter(indent=4)
 
@@ -407,7 +479,7 @@ def detailsMonthperSector(client, startMonth=201910):
             export_svgs(p, filename='Details-{0}-{1}.svg'.format(sector,measurement))
             export_png(p, filename='Details-{0}-{1}.png'.format(sector,measurement))
 
-
+#-------------------
 
 def topImproversQ(client, firstQ=20192, lastQ=20193, topX=5):
     pp = pprint.PrettyPrinter(indent=4)
@@ -419,6 +491,7 @@ def topImproversQ(client, firstQ=20192, lastQ=20193, topX=5):
 
         df1 = query_to_dataframe(client, query.format(firstQ), measurement)
         df1.sort_values(by=['domain'], ascending=True, inplace=True)
+
         df2 = query_to_dataframe(client, query.format(lastQ), measurement)
         df2.sort_values(by=['domain'], ascending=True, inplace=True)
 
@@ -434,6 +507,8 @@ def topImproversQ(client, firstQ=20192, lastQ=20193, topX=5):
         df2.score = round(df2.score/2)
         df2 = df2.astype({"score": int})
         df = df2.subtract(df1)
+        df['score'].fillna(0, inplace=True)
+        df = df.astype({"score": int})
 
         # Now sort by score
         df.sort_values(by=['score','domain'], ascending=False, inplace=True)
@@ -492,16 +567,21 @@ def topImproversMonth(client, firstMonth=201909, lastMonth=201910, topX=5):
         export_png(p, filename='Top{0} {1}.png'.format(topX,measurement))
 
 
+#-------------------
 
 # Quarterly reports
 def quarterly_reports(client, startQ=20184, endQ=20193, improveStartQ=20192):
-    scoreLastQs(client=client, startQ=startQ, endQ=endQ)
-#    scoreLastQallSectors(client=client, startQ=endQ)
-    scoreLastQ_X(client=client, startQ=endQ, groupby='SURFmailfilter', palette = paletteHeatmap)
-    scoreLastQ_X(client=client, startQ=endQ, groupby='SURFdomeinen', palette = paletteHeatmap)
+#    scoreLastQs(client=client, startQ=startQ, endQ=endQ)
+    scoreLastQsWebIV(client=client, startQ=startQ, endQ=endQ)
+    scoreLastQsMailIV(client=client, startQ=startQ, endQ=endQ)
+    scoreLastQsMailConnIV(client=client, startQ=startQ, endQ=endQ)
+
+##    scoreLastQ_X(client=client, startQ=endQ, groupby='SURFmailfilter', palette = paletteHeatmap)
+##    scoreLastQ_X(client=client, startQ=endQ, groupby='SURFdomeinen', palette = paletteHeatmap)
     scoreLastQ_X(client=client, startQ=endQ, groupby='type', palette = paletteSector)
     scoreLastQsPerSector(client=client, startQ=startQ, endQ=endQ)
     detailsQperSector(client=client, startQ=endQ)
+    detailsQ(client=client, startQ=endQ)
     topImproversQ(client, firstQ=improveStartQ, lastQ=endQ, topX=5)
     topImproversQ(client, firstQ=improveStartQ, lastQ=endQ, topX=0)
     return
@@ -509,12 +589,12 @@ def quarterly_reports(client, startQ=20184, endQ=20193, improveStartQ=20192):
 # Monthly reports
 def monthly_reports(client, startMonth=201807, endMonth=201910, improveStartMonth=201909):
     scoreLastMonths(client=client, startMonth=startMonth, endMonth=endMonth)
-#    scoreLastMonthallSectors(client=client, startMonth=endMonth)
-    scoreLastMonth_X(client=client, startMonth=endMonth, groupby='SURFdomeinen', palette = paletteHeatmap)
-    scoreLastMonth_X(client=client, startMonth=endMonth, groupby='SURFmailfilter', palette = paletteHeatmap)
+##    scoreLastMonth_X(client=client, startMonth=endMonth, groupby='SURFdomeinen', palette = paletteHeatmap)
+##    scoreLastMonth_X(client=client, startMonth=endMonth, groupby='SURFmailfilter', palette = paletteHeatmap)
     scoreLastMonth_X(client=client, startMonth=endMonth, groupby='type', palette = paletteSector)
     scoreLastMonthsPerSector(client=client, startMonth=startMonth, endMonth=endMonth)
     detailsMonthperSector(client=client, startMonth=endMonth)
+    detailsMonth(client=client, startMonth=endMonth)
     topImproversMonth(client, firstMonth=improveStartMonth, lastMonth=endMonth, topX=5)
     topImproversMonth(client, firstMonth=improveStartMonth, lastMonth=endMonth, topX=0)
     return
@@ -527,9 +607,9 @@ client = InfluxDBClient(host='localhost', port = 8086)
 client.switch_database('IV-metingen')
 
 # Quarterly reports
-quarterly_reports(client, startQ=20183, endQ=20193, improveStartQ=20192)
+#quarterly_reports(client, startQ=20191, endQ=20201, improveStartQ=20194)
 
 # Monthly reports
-#monthly_reports(client, startMonth=201908, endMonth=201912, improveStartMonth=201911)
+monthly_reports(client, startMonth=202002, endMonth=202006, improveStartMonth=202005)
 
 #scoreLatestPerSector(client)

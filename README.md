@@ -12,12 +12,12 @@ With the internet.nl website you can test individual domains, but if you need to
 
 Note that newer versions of the website will allow you to upload a list as well and have it regularly tested via its new [dashboard](https://dashboard.internet.nl) functionality. The dashboard is currently still in beta.
 
-The two scripts in this repository allow you to submit domains from an Excel (.xlsx) file to the internet.nl API and convert the resulting JSON results back to an Excel (.xlsx) file for further processing.
+The scripts in this repository allow you to submit domains from an Excel (.xlsx) file to the internet.nl API and convert the resulting JSON results. One script converts the JSON results back to an Excel (.xlsx) file for further processing, another outputs a text file that can be written/imported into an influx database.
 
 The submit-domains script does the submitting bit. After successful submission a simple shell script will be created that will download results of the batch test and display it on screen. While the test is not finished yet it will simply show the response of the API instead.
 
-The result-to-excel script expects a JSON file and extracts all the information into an .xlsx file, which you can then open using Excel (or other tools/programs/things that can read xlsx files). The script extracts all the categories and views from the JSON file. Which categories and views you get depends on the settings internet.nl configures for your account. See the [Batch API documentation](https://github.com/NLnetLabs/Internet.nl/blob/master/documentation/batch_http_api.md) for more information on categories and views.
-The script also adds the link at the end of each row that points to the results on internet.nl for the domain on that row. Optionally it can add information from the domains Excel file used for submitting domains, useful if it contains metadata you may need for further processing.
+The result-to-excel script expects a JSON file and extracts all the information into an .xlsx file of the same name (but different extension), which you can then open using Excel (or other tools/programs/things that can read xlsx files). The script extracts all the top level results and the individual test results from the JSON file. See the [Batch API documentation](https://github.com/NLnetLabs/Internet.nl/blob/master/documentation/batch_http_api.md) for more information on categories and views.
+The script also adds the link at the end of each row that points to the results on internet.nl for the domain on that row. Optionally it can add information from the domains Excel file used for submitting domains, useful if that Excel file contains metadata you may need for further processing.
 
 ## Getting started
 
@@ -40,45 +40,43 @@ Each line can contain 3 fields: the domain to be used for a web test, the domain
 
 To submit your domains to the API for testing use the following command:
 ```
-./submit-domains.py  <mail|web> [name = 'Test'] [domains file = 'domains/domains.xlsx']
+./submit-domains.py  <mail|web> [name = 'Test'] [domains file = 'domains/domains.xlsx'] [sheet_name=0]
 ```
 
-Since the API can test mail or web domains, you have to specify which of the two you want. You can optionally follow that with the name you want the test to have and the location where the .xlsx file to use is. If the defaults are fine by you then simply invoking the script followed by mail or web will do nicely.
+Since the API can test mail or web domains, you have to specify which of the two you want. You can optionally follow that with the name you want the test to have and the location where the .xlsx file to use is. If the defaults are fine by you then simply invoking the script followed by mail or web will do nicely. Depending on the type of measurement (web or mail) the domain information in the corresponding column of the .xlsx file will be used. You can specify the name of the sheet from the .xslx file to use as the final argument. If you specify nothing the first sheet will be used by default. This allows you to have other sheets in the same .xlsx file, for example for testing purposes or simply for having multiple batches of domains in the same file rather than multiple ones.
 
-Depending on the type of measurement (web or mail) the domain information in the corresponding column of the .xlsx file will be used.
-
-The script will use the information from the credentials file to authenticate against the API and submit the list of domains. If successful then a shell script will be created called 'getResult-<name>-<type>', so with the defaults this script will either be called 'getResult-Test-web' or 'getResult-Test-mail' depending on the type of measurement you specified.
+The script will use the information from the credentials file to authenticate against the API and submit the list of domains.
 
 ### Retrieving the results
-Using the 'getResults-*' shell script you can retrieve the results of the batch measurement.
-The shell script is nothing more than a curl command that also uses the 'credentials' file for account information and points to the right URL where the results will eventually be available.
 
-Measurements will take some time to complete. If the measurement is still running the API/script will output something such as:
+Measurements will take some time to complete. The batch-request script can be used to check on the progress. With this script you can list the batch requests, get the status of an individual request, delete an outstanding request (e.g. if it is blocking further measurements) and finally retrieve the results of a specific batch measurement.
 
 ```
-{"success": false, "message": "Batch request is running", "data": {"results": "https://batch.internet.nl/api/batch/v1.1/results/<long_number>/"}
-```
-After a while the message changes to something like this:
+Usage:
+./batch-request.py  <list|stat|get|del> [<limit|request_id>]
 
+./batch-request.py  list [limit]         - lists the requests, up to [limit] results. default/0 is all
+./batch-request.py  stat <request_id>    - gets the status of the request
+./batch-request.py  get <request_id>     - gets the results of the request
+./batch-request.py  del <request_id>     - cancels the request
 ```
-{"success": false, "message": "Report is being generated", "data": {"results": "https://batch.internet.nl/api/batch/v1.1/results/<long_number>/"}
-```
-But please do not keep running the script every few minutes, since that will unnecessarily put a load on the machine(s); just try it every hour or so.
 
-Once the results are ready, the output of the script will be screenfuls of JSON data.
+Use the list command to get an overview of all the known batch request. The latest requests will be listed first. You can limit the number of requests returned by specifying a limit as an argument. Default is to list all.
+
+Using the request_id for a specific batch (from the list command) you can use the stat command to get the status of that specific batch request. You can use either the list of the stat command to check on the status of requests (output format is the same), but note that just using the list command will not trigger really generating the report. That is: a batch measurement will stop at the status 'generating' if you only use the list command. Retrieving the status of that individual request using the stat command will trigger the generation of the report. Once the status is 'done', the report can be retrieved by using the get command.
 
 ### Processing the results
 Put the results in a file by redirecting the output, e.g.:
 
 ```
-./getResult-Test-web > output.json
+./batch-request <request_id> > output.json
 ```
 The 'result-to-xlsx' script can be used to convert the JSON file to an .xlsx file containing all the measurement results.
 
 ```
 ./result-to-xlsx.py  <JSON results file|JSON results directory> [domains xlsx file] [metadata_column_name[,md_col_name2, ...]]
 ```
-The first argument is the JSON file you just created by redirecting the output. You can also refer to a directory in which case the script will convert all the .json files it finds there. Optionally you can specify the domains .xlsx file you used to submit the measurement. If you specify a domains file then the script will add the 'type' information from that file (from the column of the same name) to every domain it reads the results of. If you don't need some sort of organisation into groups or types for further processing then there is no need to specify the domains file, but if you would like that information present in the resulting .xlsx (for example because you want to order the result by type), then obviously you do need to specify it. You can specify multiple columns from the domains xlsx file to be combined in this way by separating the column names with a comma. As an example: to combine the Name and type with the measurement results the command would be something like this:
+The first argument is the JSON file you just created by redirecting the output. You can also refer to a directory in which case the script will convert all the .json files it finds there. Optionally you can specify the domains .xlsx file you used to submit the original measurement. If you specify a domains file then the script will add the 'type' information from that file (from the column of the same name) to every domain it reads the results of. If you don't need some sort of organisation into groups or types for further processing then there is no need to specify the domains file, but if you would like that information present in the resulting .xlsx (for example because you want to order the result by type), then obviously you do need to specify it. You can specify multiple columns from the domains xlsx file to be combined in this way by separating the column names with a comma. As an example: to combine information from a Name and type column with the measurement results the command would be something like this:
 
 ```
 ./results-to-xslx.py test.json domains/domains.xlsx type,Name
