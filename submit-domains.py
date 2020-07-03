@@ -8,7 +8,7 @@ import requests
 import json
 import pandas as pd
 import math
-
+from lib import utils as ut
 import pprint
 
 def filterDomains(allDomains, name= 'test', type = 'web'):
@@ -24,34 +24,6 @@ def filterDomains(allDomains, name= 'test', type = 'web'):
         domains = allDomains[type].dropna().tolist()
         typeDomains['domains'] = domains
     return typeDomains
-
-def readCredentials(machine = 'batch.internet.nl', filename = 'credentials'):
-    """Find login  password for machine from a netrc formatted file"""
-    credentials = {'login':'', 'password':''}
-    words=[];
-    with open(filename, 'r') as creds:
-        for line in creds:
-            line = line.strip()
-            words = words + line.split()
-
-    for i in range(0, len(words), 6):
-        endpoint = words[i:i+6]
-        if endpoint[1].endswith(machine):
-            credentials[endpoint[2]] = endpoint[3]
-            credentials[endpoint[4]] = endpoint[5]
-            break;
-
-    return credentials
-
-def writeGetResults(name, url):
-    r"""Writes the file with the curl command to retrieve the results"""
-    with open(name, 'w') as getres:
-        getres.write('#!/bin/bash\n')
-        getres.write('curl -s --netrc-file credentials {}'.format(url))
-        getres.close()
-    # Make the file executable
-    st = os.stat(name)
-    os.chmod(name, st.st_mode | stat.S_IEXEC)
 
 #############################################
 pp = pprint.PrettyPrinter(indent=4)
@@ -81,7 +53,7 @@ if len(sys.argv) > 4 :
     sheet_name = sys.argv[4]
 
 try:
-    credentials = readCredentials()
+    credentials = ut.readCredentials()
 except Exception as e:
     print("error opening/processing credentials file: {}".format(e))
     exit(1)

@@ -10,7 +10,7 @@ import time
 import pandas as pd
 import math
 import pprint
-
+from lib import utils as ut
 
 v1_to_2_cats = {
     "mail" : {
@@ -46,26 +46,13 @@ specific_tests = {
     ]
 }
 
+def JSONtoInflux(data, domains_metadata, columns_to_add=['type']):
+    api_version = ut.getAPIversion(data)
 
-def openJSON(filename):
-    """open the JSON (result) file and return it as a json structure"""
-    data = {}
-    with open(filename) as f:
-        data = json.load(f)
-    return data
-
-def getMeasurementType1_1(domains):
-    """Determine wether measurement results are for web or mail"""
-    measurementType = 'web'
-    status = 'failed'
-    for testDomain in domains:
-        if (testDomain['status'] == 'ok'):
-            for category in testDomain['categories']:
-                if (category['category'] == 'auth'):
-                    measurementType = 'mail'
-            break
-
-    return measurementType
+    if api_version == '1.1' or api_version == '1.0':
+        JSONtoInflux1_1(data, domains_metadata, columns_to_add)
+    else:
+        JSONtoInflux2_0(data, domains_metadata, columns_to_add)
 
 
 
@@ -80,7 +67,7 @@ def JSONtoInflux1_1(data, domains_metadata, columns_to_add=['type']):
 
     # Set index on pandas dataframe as the measurement type.
     # That column contains the domains as used in the measurements
-    measurementType = getMeasurementType1_1(domains)
+    measurementType = ut.getMeasurementType1_1(domains)
     if not domains_metadata.empty:
         domains_metadata = domains_metadata.set_index(measurementType, inplace=False)
 
@@ -150,21 +137,6 @@ def JSONtoInflux1_1(data, domains_metadata, columns_to_add=['type']):
         print(' {}000000000'.format(int(timestamp_dt.timestamp())))
 
 
-def getMeasurementType2_0(domains):
-    """Determine wether measurement results are for web or mail"""
-    measurementType = 'web'
-    status = 'failed'
-    for testDomain in domains:
-        if (domains[testDomain]['status'] == 'ok'):
-            for category in domains[testDomain]['results']['categories']:
-                if (category.startswith('mail_')):
-                    measurementType = 'mail'
-                if (category.startswith('web_')):
-                    measurementType = 'web'
-            break
-
-    return measurementType
-
 def JSONtoInflux2_0(data, domains_metadata, columns_to_add=['type']):
     """Display the results as a CSV file ready for import by influxdb"""
 
@@ -174,7 +146,7 @@ def JSONtoInflux2_0(data, domains_metadata, columns_to_add=['type']):
 
     # Set index on pandas dataframe as the measurement type.
     # That column contains the domains as used in the measurements
-    measurementType = getMeasurementType2_0(domains)
+    measurementType = ut.getMeasurementType2_0(domains)
     if not domains_metadata.empty:
         domains_metadata = domains_metadata.set_index(measurementType, inplace=False)
 
@@ -290,14 +262,6 @@ except Exception as e:
 #pp.pprint(domains.head(10))
 
 for fn in filelist:
-    data = openJSON(fn)
-    api_version = '2.0'
-    if 'data' in data:
-        api_version = data['data']['api-version']
-
-    if api_version == '1.1' or api_version == '1.0':
-        JSONtoInflux1_1(data, domains, columns_to_add)
-    else:
-        JSONtoInflux2_0(data, domains, columns_to_add)
-
+    data = ut.openJSON(fn)
+    JSONtoInflux(data, domains, columns_to_add)
 # All done

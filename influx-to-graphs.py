@@ -52,7 +52,7 @@ query_detail_mail_Month = 'SELECT round("score") AS "score", round("mail_ipv6") 
 
 
 # Query for specific Quarter and sector (type), for all domains
-query_detail_web_Q_Sector = 'SELECT round("score") AS "score", round("web_ipv6") AS "IPv6", round("web_dnssec") AS "DNSSEC", round("tls") AS "TLS" FROM "IV-metingen"."autogen"."web" WHERE "q" = {0} AND "type"=\'{1}\' GROUP BY "domain"'
+query_detail_web_Q_Sector = 'SELECT round("score") AS "score", round("web_ipv6") AS "IPv6", round("web_dnssec") AS "DNSSEC", round("web_https") AS "TLS" FROM "IV-metingen"."autogen"."web" WHERE "q" = {0} AND "type"=\'{1}\' GROUP BY "domain"'
 query_detail_mail_Q_Sector = 'SELECT round("score") AS "score", round("mail_ipv6") AS "IPv6", round("mail_dnssec") AS "DNSSEC", round("mail_starttls_tls_available") AS "STARTTLS", round("mail_auth_spf_policy") AS "SPF", round("mail_auth_dkim_exist") AS "DKIM", round("mail_auth_dmarc_policy") AS "DMARC" FROM "IV-metingen"."autogen"."mail" WHERE "q" = {0} AND "type"=\'{1}\' GROUP BY "domain"'
 
 # Query details for specific month and sector (type)
@@ -571,13 +571,13 @@ def topImproversMonth(client, firstMonth=201909, lastMonth=201910, topX=5):
 
 # Quarterly reports
 def quarterly_reports(client, startQ=20184, endQ=20193, improveStartQ=20192):
-#    scoreLastQs(client=client, startQ=startQ, endQ=endQ)
+    scoreLastQs(client=client, startQ=startQ, endQ=endQ)
     scoreLastQsWebIV(client=client, startQ=startQ, endQ=endQ)
     scoreLastQsMailIV(client=client, startQ=startQ, endQ=endQ)
     scoreLastQsMailConnIV(client=client, startQ=startQ, endQ=endQ)
 
-##    scoreLastQ_X(client=client, startQ=endQ, groupby='SURFmailfilter', palette = paletteHeatmap)
-##    scoreLastQ_X(client=client, startQ=endQ, groupby='SURFdomeinen', palette = paletteHeatmap)
+  ##    scoreLastQ_X(client=client, startQ=endQ, groupby='SURFmailfilter', palette = paletteHeatmap)
+  ##    scoreLastQ_X(client=client, startQ=endQ, groupby='SURFdomeinen', palette = paletteHeatmap)
     scoreLastQ_X(client=client, startQ=endQ, groupby='type', palette = paletteSector)
     scoreLastQsPerSector(client=client, startQ=startQ, endQ=endQ)
     detailsQperSector(client=client, startQ=endQ)
@@ -607,9 +607,9 @@ client = InfluxDBClient(host='localhost', port = 8086)
 client.switch_database('IV-metingen')
 
 # Quarterly reports
-#quarterly_reports(client, startQ=20191, endQ=20201, improveStartQ=20194)
+quarterly_reports(client, startQ=20192, endQ=20202, improveStartQ=20201)
 
 # Monthly reports
-monthly_reports(client, startMonth=202002, endMonth=202006, improveStartMonth=202005)
+#monthly_reports(client, startMonth=202002, endMonth=202006, improveStartMonth=202005)
 
 #scoreLatestPerSector(client)
