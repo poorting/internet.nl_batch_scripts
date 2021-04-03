@@ -2,13 +2,8 @@
 
 import sys
 import os
-import csv
-import requests
-import json
 import datetime
-import time
 import pandas as pd
-import math
 import pprint
 from lib import utils as ut
 
@@ -204,7 +199,9 @@ def JSONtoInflux2_0(data, domains_metadata, columns_to_add=['type']):
                 dom_views = domainresults['results']['tests']
                 for views in dom_views:
                     if views in specific_tests[measurementType]:
-                        fieldset[views] = str(int(dom_views[views]['status'] == 'passed'))+'i'
+#                        fieldset[views] = str(int(dom_views[views]['status'] == 'passed'))+'i'
+# Also Warning should count as a pass
+                        fieldset[views] = str(int(dom_views[views]['status']=='passed' or dom_views[views]['status']=='warning'))+'i'
 
         fldcnt = len(fieldset)
         for field in fieldset:
@@ -221,8 +218,9 @@ def JSONtoInflux2_0(data, domains_metadata, columns_to_add=['type']):
 pp = pprint.PrettyPrinter(indent=4)
 
 if len(sys.argv) < 2 :
-    print ('Usage: ')
-    print (sys.argv[0], ' <JSON results file|JSON results directory> [domains XLSX file] [metadata_column_name=\'type\'[,md_col_name2, ...]]')
+    print('Usage: ')
+    print(sys.argv[0], ' <JSON results file|JSON results directory> [domains XLSX file] [metadata_column_name=\'type\'[,md_col_name2, ...]]')
+    print('\nConverts internet.nl API json results to influxdb line format (to stdout)\n')
     quit(1)
 
 # Create empty dataframe

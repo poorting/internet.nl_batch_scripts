@@ -70,6 +70,6 @@ if r.status_code == 200 or r.status_code == 201:
         pp.pprint(r.json())
 else:
     print('Something went wrong! (Error = {})'.format(r.status_code))
-    pp.pprint(r.json())
+    pp.pprint(r.reason)
 
 # All done

@@ -59,14 +59,6 @@ for fn in filelist:
     print('Processing {0}'.format(fn))
     data = ut.openJSON(fn)
 
-#    api_version = '2.0'
-#    if 'data' in data:
-#        api_version = data['data']['api-version']
-
-#    if api_version == '1.1' or api_version == '1.0':
-#        df = JSONtoDF1_1(data, domains, columns_to_add)
-#    else:
-#        df = JSONtoDF2_0(data, domains, columns_to_add)
     df = ut.JSONtoDF(data, domains, columns_to_add)
 
     df.sort_values(by=['score','domain'], ascending=False, inplace=True)
