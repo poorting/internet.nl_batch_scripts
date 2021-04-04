@@ -59,7 +59,7 @@ except Exception as e:
     exit(1)
 
 try:
-    domains = pd.read_excel(domainsfile, sheet_name=sheet_name)
+    domains = pd.read_excel(domainsfile, sheet_name=sheet_name, engine='openpyxl')
 except Exception as e:
     print("error processing domains Excel file: {}".format(e))
     exit(1)

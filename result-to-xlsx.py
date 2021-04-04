@@ -50,7 +50,7 @@ else:
 
 try:
     if not domainsFile == '':
-        domains = pd.read_excel(domainsFile, sheet_name=0)
+        domains = pd.read_excel(domainsFile, sheet_name=0, engine='openpyxl')
 except Exception as e:
     print("error processing domains Excel file: {}".format(e))
     exit(1)

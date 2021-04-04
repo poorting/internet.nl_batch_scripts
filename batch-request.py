@@ -1,10 +1,7 @@
 #! /usr/bin/env python3
 
 import sys
-import stat
-import os
 import requests
-import json
 from lib import utils as ut
 import pprint
 

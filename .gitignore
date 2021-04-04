@@ -15,3 +15,11 @@ credentials.*
 
 # generated getResult scripts
 getResult*
+
+#Python virtual environment
+venv
+
+__pycache__
+
+# pyCharm IDE project
+.idea
