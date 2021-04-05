@@ -155,7 +155,7 @@ To produce graphs for the previous 3 quarters:
 ```
 ../influx-to-graphs.py DATABASE quarter 3
 ```
-If fewer periods are present in the database than you specify, the maximum period of available data will be used.
+If fewer periods are present in the database than you specify, the maximum period of available data will be used. Also, if intermediate measurement series are missing these will be skipped. So for example if the database is missing a quarter (e.g. 2020Q1, 2020Q2, 2020Q3, 2021Q1; missing 2020Q4), the graphs will be produced using data that is available and ignore the missing quarter, this is also the case for the 'top improvers' tables (see below).
 
 The graphs produced are:
 * Overall scores for web/mail combined in one graph
@@ -167,7 +167,7 @@ The graphs produced are:
 
 (So the improvers tables don't distinguish between *type*)
 
-Improvement (or deterioration) is determined by comparing the latest scores with the score of the previous period (month or quarter). The example below shows top 5 improvers for 2021Q1 compared to 2020Q4 for mail. 
+Improvement (or deterioration) is determined by comparing the latest scores with the score of the previous period (month or quarter). Note that this may be more than a month (or quarter) apart if that previous measurement is missing. In other words: the comparison doesn't check whether the previous measurement is a month (or quarter) apart, it will simply use the previous measurement it finds. To give an idea what an improvers table looks like: The example below shows top 5 improvers for 2021Q1 compared to 2020Q4 for mail. 
 
 ![Example graph](https://raw.githubusercontent.com/poorting/internet.nl_batch_scripts/master/graphs/Top5%20mail.png)
 
