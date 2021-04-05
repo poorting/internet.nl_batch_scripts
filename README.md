@@ -157,6 +157,8 @@ To produce graphs for the previous 3 quarters:
 ```
 If fewer periods are present in the database than you specify, the maximum period of available data will be used. Also, if intermediate measurement series are missing these will be skipped. So for example: If the database is missing a quarter (e.g. contains 2020Q1, 2020Q2, 2020Q3, 2021Q1; so is missing 2020Q4), the graphs will be produced using data that **is** available and ignore the missing quarter, this is also the case for the 'top improvers' tables (see below).
 
+All graphs are written to disk in both *PNG* and *SVG* format. The latter is useful for presentations or printed materials since *SVG* is a scalable format, meaning you can enlarge the graphs without losing quality. *PNG* is more widely supported though, and is good enough for most cases.
+
 The graphs produced are:
 * Bar graph of overall scores for web/mail combined in one graph (example above)
 * Bar graph of overall scores for web/mail for every distinct *type* in the data (e.g. 'Uni','Research') **if** *type* data is available. 
@@ -164,8 +166,6 @@ The graphs produced are:
 * Detailed tables (both web and mail) for every distinct *type* in the data (e.g. 'Uni','Research') **if** *type* data is available.
 * Top 5 'improvers' overall, for both web and mail
 * Top 0 (==all) 'improvers' overall, for both web and mail
-
-All graphs are written to disk in both *PNG* and *SVG* format. The latter is useful for presentations or printed materials since *SVG* is a scalable format, meaning you can enlarge the graphs without losing quality. *PNG* is more widely supported though, and is good enough for most cases.
 
 Improvement (or deterioration) is determined by comparing the latest scores with the score of the previous period (month or quarter) for each domain present. Note that this may be more than a month (or quarter) apart if that previous measurement is missing. In other words: the comparison doesn't check whether the previous measurement is a month (or quarter) apart, it will simply use the previous (month/quarter) measurement it finds. To give an idea what an improvers table looks like: The example below shows the top 5 improvers for 2021Q1 compared to 2020Q4 for mail. 
 
