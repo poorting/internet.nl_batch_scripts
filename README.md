@@ -117,7 +117,7 @@ If you don't have a need for differentiating then you can omit the domains file 
 ```
 ./result-to-influx.py measurements
 ```
-The script will also add information on the month and quarter of the measurements (yyyyQ#, e.g. 2020Q4). It helps to do measurements roughly on the same day of the month/quarter. Please note that a measurement done in the months 1,4,7,10 (January, April, July, October) will be marked as measurements for the *preceding* quarter. So a measurement in January 2021 will be marked as a 2020Q4 measurement.
+The script will also add information on the month and quarter of the measurements (yyyyQ#, e.g. 2020Q4). Please note that a measurement done in the months 1,4,7,10 (January, April, July, October) will be marked as measurements for the *preceding* quarter. So a measurement in January 2021 will be marked as a 2020Q4 measurement. It helps to do measurements roughly on the same day of the month/quarter. If you want to do quarter measurements then do them at the start of January, April, July, and October.
 
 ### Ingesting the data
 If all goes well the script will output all the lines of data in the influxdb line format. You can ingest this information into influxdb by piping it using the ``influx-ingest`` script:
