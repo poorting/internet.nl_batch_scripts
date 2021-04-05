@@ -113,19 +113,19 @@ This will combine the data from the measurements with the data form the domains.
 
 The type will later be used to create graphs for every *type* as well as an overall graph for all types combined.
 
-If you don't have a need for differentiating then you can omit the domains file and type from the command:
+If you don't have a need for differentiating then you can leave out the domains file and type:
 ```
 ./result-to-influx.py measurements
 ```
 The script will also add information on the month and quarter of the measurements (yyyyQ#, e.g. 2020Q4). Please note that a measurement done in the months 1,4,7,10 (January, April, July, October) will be marked as measurements for the *preceding* quarter. So a measurement in January 2021 will be marked as a 2020Q4 measurement. It helps to do measurements roughly on the same day of the month/quarter. If you want to do quarter measurements then do them at the start of January, April, July, and October.
 
 ### Ingesting the data
-If all goes well the script will output all the lines of data in the influxdb line format. You can ingest this information into influxdb by piping it using the ``influx-ingest`` script:
+If all goes well the script will output all the lines of data in the influxdb line format. You can ingest this information into influxdb by piping it to the ``influx-ingest`` script:
 
 ```
 ./result-to-influx.py measurements domains/domains.xlsx type | ./influx-ingest DATABASE
 ```
-Where DATABASE is the name of the database you want to use (this will be created by the script, discarding information already present)
+Where DATABASE is the name of the database you want to use. This will be created by the script; meaning that if it already exists it will be overwritten (and previous data lost).
 
 Piping it will ingest the data line by line, which is painfully slow. A much quicker way is to first redirect the output to a file and then ingesting the complete file in one go:
 
@@ -155,24 +155,24 @@ To produce graphs for the previous 3 quarters:
 ```
 ../influx-to-graphs.py DATABASE quarter 3
 ```
-If fewer periods are present in the database than you specify, the maximum period of available data will be used. Also, if intermediate measurement series are missing these will be skipped. So for example if the database is missing a quarter (e.g. 2020Q1, 2020Q2, 2020Q3, 2021Q1; missing 2020Q4), the graphs will be produced using data that is available and ignore the missing quarter, this is also the case for the 'top improvers' tables (see below).
+If fewer periods are present in the database than you specify, the maximum period of available data will be used. Also, if intermediate measurement series are missing these will be skipped. So for example: If the database is missing a quarter (e.g. contains 2020Q1, 2020Q2, 2020Q3, 2021Q1; so is missing 2020Q4), the graphs will be produced using data that **is** available and ignore the missing quarter, this is also the case for the 'top improvers' tables (see below).
 
 The graphs produced are:
-* Overall scores for web/mail combined in one graph
-* Overall scores for web/mail for every distinct *type* in the data (e.g. 'Uni','Research')
+* Bar graph of overall scores for web/mail combined in one graph (example above)
+* Bar graph of overall scores for web/mail for every distinct *type* in the data (e.g. 'Uni','Research') **if** *type* data is available. 
 * Detailed tables overall, one for mail, one for web.
-* Detailed tables (both web and mail) for every distinct *type* in the data (e.g. 'Uni','Research')
+* Detailed tables (both web and mail) for every distinct *type* in the data (e.g. 'Uni','Research') **if** *type* data is available.
 * Top 5 'improvers' overall, for both web and mail
 * Top 0 (==all) 'improvers' overall, for both web and mail
 
-(So the improvers tables don't distinguish between *type*)
-
-Improvement (or deterioration) is determined by comparing the latest scores with the score of the previous period (month or quarter). Note that this may be more than a month (or quarter) apart if that previous measurement is missing. In other words: the comparison doesn't check whether the previous measurement is a month (or quarter) apart, it will simply use the previous measurement it finds. To give an idea what an improvers table looks like: The example below shows top 5 improvers for 2021Q1 compared to 2020Q4 for mail. 
+Improvement (or deterioration) is determined by comparing the latest scores with the score of the previous period (month or quarter) for each domain present. Note that this may be more than a month (or quarter) apart if that previous measurement is missing. In other words: the comparison doesn't check whether the previous measurement is a month (or quarter) apart, it will simply use the previous (month/quarter) measurement it finds. To give an idea what an improvers table looks like: The example below shows the top 5 improvers for 2021Q1 compared to 2020Q4 for mail. 
 
 ![Example graph](https://raw.githubusercontent.com/poorting/internet.nl_batch_scripts/master/graphs/Top5%20mail.png)
 
+The number between brackets after the domain names is the difference in the total score for that domain (2021Q1) compared to the previous period (2020Q4). 
+
 Green squares mean a 'pass' for a topic (e.g. IPv6), red squares denote a 'fail'. A lighter colour square means it changed compared to the previous period. So a light green square denotes a 'pass' where the previous period it was a 'fail' (IPv6 and DNSSEC for xyz.nl in the example).
-Similarly, a light red square means a 'fail' where the previous period it was a 'pass'. In essence: bright green squares are improvements, bright red squares are deteriorations.
+Similarly, a light red square means a 'fail' where the previous period it was a 'pass'. In essence: light green squares are improvements, light red squares are deteriorations.
 
 
 ## License
