@@ -172,7 +172,8 @@ Improvement (or deterioration) is determined by comparing the latest scores with
 ![Example graph](https://raw.githubusercontent.com/poorting/internet.nl_batch_scripts/master/graphs/Top5%20mail.png)
 
 Green squares mean a 'pass' for a topic (e.g. IPv6), red squares denote a 'fail'. A lighter colour square means it changed compared to the previous period. So a light green square denotes a 'pass' where the previous period it was a 'fail' (IPv6 and DNSSEC for xyz.nl in the example).
-Similarly, a light red square means a 'fail' where the previous period it was a 'pass' (a deterioration therefore).
+Similarly, a light red square means a 'fail' where the previous period it was a 'pass'. In essence: bright green squares are improvements, bright red squares are deteriorations.
+
 
 ## License
 
