@@ -91,6 +91,88 @@ The script will automatically detect if the results are for a web or a mail type
 
 If all is well then the script will output the xlsx formatted results to a file with the same name(s) as the .json file but with an .xlsx extension.
 
+## Creating graphs
+Once you have assembled a number of months (or quarters) worth of measurements you can use them to create graphs that show improvement (hopefully) over time, such as this example over a one year period (5 quarters).
+
+![Example graph](https://raw.githubusercontent.com/poorting/internet.nl_batch_scripts/master/graphs/Scores-overall.png)
+
+The graphs are created using influxdb for storage. Relevant data for graphs is extracted using InfluxQL and Panda dataframes. The graphs are made using the [bokeh graphics library](https://docs.bokeh.org/en/latest/index.html).
+
+### Dependencies
+Bokeh uses Selenium for creating the resulting graphic files (in PNG and SVG format), so you need to have this installed (it is in requirements.txt) as well as a suitable driver (*geckodriver* or *chromedriver* matching your browser version).
+
+A minimal dockerized influxdb is provided in the influxdb directory, which is all you need for creating graphs. You can start it with the usual *docker-compose up/down (-d)* commands. If you want to use your browser to explore the influxdb data produced you can use the [influxdata sandbox](https://github.com/influxdata/sandbox), which provides a more complete influx stack; including *chronograf* for exploring the data.
+
+### Creating influxdb data
+Assuming you have all the JSON measurement results in a separate directory *measurements*, you can use the ``result-to-influx.py`` to convert all the JSON files in one go to a file that can be imported into influx. 
+
+```
+./result-to-influx.py measurements domains/domains.xlsx type
+```
+This will combine the data from the measurements with the data form the domains.xlsx file (from the *type* column). The data in the type column can be useful if you have domains from different groups or of different types. In my case this is used to differentiate between universities, applied universities, vocational colleges and research institutes for example. Use single words for these in the domains file (e.g. 'Uni','Research', etc.), see the example domains.xlsx to get the idea.
+
+The type will later be used to create graphs for every *type* as well as an overall graph for all types combined.
+
+If you don't have a need for differentiating then you can omit the domains file and type from the command:
+```
+./result-to-influx.py measurements
+```
+The script will also add information on the month and quarter of the measurements (yyyyQ#, e.g. 2020Q4). It helps to do measurements roughly on the same day of the month/quarter. Please note that a measurement done in the months 1,4,7,10 (January, April, July, October) will be marked as measurements for the *preceding* quarter. So a measurement in January 2021 will be marked as a 2020Q4 measurement.
+
+### Ingesting the data
+If all goes well the script will output all the lines of data in the influxdb line format. You can ingest this information into influxdb by piping it using the ``influx-ingest`` script:
+
+```
+./result-to-influx.py measurements domains/domains.xlsx type | ./influx-ingest DATABASE
+```
+Where DATABASE is the name of the database you want to use (this will be created by the script, discarding information already present)
+
+Piping it will ingest the data line by line, which is painfully slow. A much quicker way is to first redirect the output to a file and then ingesting the complete file in one go:
+
+```
+./result-to-influx.py measurements domains/domains.xlsx type > measurements/influxdb.csv
+
+./influx-ingest DATABASE measurements/influxdb.csv
+```
+
+### Creating the graphs
+With the data present in influxdb, `influx-to-graphs.py` will produce the graphs. 
+They will be written to the current directory, so create a suitable subdirectory to avoid clutter.
+
+```
+mkdir graphs
+cd graphs
+../influx-to-graphs.py DATABASE
+```
+By default it will produce quarterly data for the past 5 quarters (so one whole year), or fewer if not enough data is present.
+
+You can change this to months and change the number of periods it takes into account.
+To produce graphs for the previous six months:
+```
+../influx-to-graphs.py DATABASE months 6
+```
+To produce graphs for the previous 3 quarters:
+```
+../influx-to-graphs.py DATABASE quarter 3
+```
+If fewer periods are present in the database than you specify, the maximum period of available data will be used.
+
+The graphs produced are:
+* Overall scores for web/mail combined in one graph
+* Overall scores for web/mail for every distinct *type* in the data (e.g. 'Uni','Research')
+* Detailed tables overall, one for mail, one for web.
+* Detailed tables (both web and mail) for every distinct *type* in the data (e.g. 'Uni','Research')
+* Top 5 'improvers' overall, for both web and mail
+* Top 0 (==all) 'improvers' overall, for both web and mail
+
+(So the improvers tables don't distinguish between *type*)
+
+Improvement (or deterioration) is determined by comparing the latest scores with the score of the previous period (month or quarter). The example below shows top 5 improvers for 2021Q1 compared to 2020Q4 for mail. 
+
+![Example graph](https://raw.githubusercontent.com/poorting/internet.nl_batch_scripts/master/graphs/Top5%20mail.png)
+
+Green squares mean a 'pass' for a topic (e.g. IPv6), red squares denote a 'fail'. A lighter colour square means it changed compared to the previous period. So a light green square denotes a 'pass' where the previous period it was a 'fail' (IPv6 and DNSSEC for xyz.nl in the example).
+Similarly, a light red square means a 'fail' where the previous period it was a 'pass' (a deterioration therefore).
 
 ## License
 
