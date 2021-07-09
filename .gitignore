@@ -12,6 +12,7 @@ Thumbs.db
 # local credentials files
 credentials
 credentials.*
+batch-request.conf
 
 # generated getResult scripts
 getResult*
