@@ -49,57 +49,59 @@ def parser_add_arguments():
                         supported formats are duckdb database, CSV or xlsx file.
 
                         '''),
-        epilog=textwrap.dedent('''\
-                        \033[1mSome examples:\033[0m
-
-                        \033[3m./%(prog)s measurements xlsx measurement.json\033[0m
-                        processes the measurement results from the \033[3mmeasurement.json\033[0m file, storing the results in \033[3mmeasurements.xlsx\033[0m
-                        with the sheet name either \033[3mweb\033[0m or \033[3mmail\033[0m depending on whether the json file contains web or mail results
-
-                        \033[3m./%(prog)s measurements csv measurement.json\033[0m
-                        processes the measurement results from the \033[3mmeasurement.json\033[0m file, storing the results in either
-                        \033[3mmeasurements-web.csv\033[0m or \033[3mmeasurements-mail.csv\033[0m depending on whether the json file contains web or mail results
-
-                        \033[3m./%(prog)s measurements duckdb measurement.json\033[0m
-                        processes the measurement results from the \033[3mmeasurement.json\033[0m file, storing the results in \033[3mmeasurements.duckdb\033[0m
-                        in the table \033[3mweb\033[0m or \033[3mmail\033[0m depending on whether the json file contains web or mail results
-
-                        \033[3m./%(prog)s measurements.duckdb measurement.json -d domains/domains.xlsx\033[0m
-                        same, but fetches additional metadata from the (default) \033[3mtype\033[0m column in the \033[3mdomains/domains.xlsx\033[0m file
-
-                        \033[3m./%(prog)s measurements.duckdb measurement.json -d domains/domains.xlsx -m type,name\033[0m
-                        same, but fetches additional metadata from the \033[3mtype\033[0m and \033[3mname\033[0m columns in the \033[3mdomains/domains.xlsx\033[0m file
-
-                        \033[3m./%(prog)s measurements.duckdb measurements/ -d all.xlsx -m type,name,province\033[0m
-                        processes all the .json files in the \033[3mmeasurements\033[0m directory and fetches additional metadata from the \033[3mtype,
-                        name\033[0m and \033[3mprovince\033[0m columns in the \033[3mall.xlsx\033[0m file, storing the results in the \033[3mmeasurements.duckdb\033[0m database,
-                        storing the results in the \033[3mweb\033[0m and/or \033[3mmail\033[0m table(s)
-                        '''),
+        # epilog=textwrap.dedent('''\
+        #                 \033[1mSome examples:\033[0m
+        #
+        #                 \033[3m./%(prog)s measurements xlsx measurement.json\033[0m
+        #                 processes the measurement results from the \033[3mmeasurement.json\033[0m file, storing the results in \033[3mmeasurements.xlsx\033[0m
+        #                 with the sheet name either \033[3mweb\033[0m or \033[3mmail\033[0m depending on whether the json file contains web or mail results
+        #
+        #                 \033[3m./%(prog)s measurements csv measurement.json\033[0m
+        #                 processes the measurement results from the \033[3mmeasurement.json\033[0m file, storing the results in either
+        #                 \033[3mmeasurements-web.csv\033[0m or \033[3mmeasurements-mail.csv\033[0m depending on whether the json file contains web or mail results
+        #
+        #                 \033[3m./%(prog)s measurements duckdb measurement.json\033[0m
+        #                 processes the measurement results from the \033[3mmeasurement.json\033[0m file, storing the results in \033[3mmeasurements.duckdb\033[0m
+        #                 in the table \033[3mweb\033[0m or \033[3mmail\033[0m depending on whether the json file contains web or mail results
+        #
+        #                 \033[3m./%(prog)s measurements.duckdb measurement.json -d domains/domains.xlsx\033[0m
+        #                 same, but fetches additional metadata from the (default) \033[3mtype\033[0m column in the \033[3mdomains/domains.xlsx\033[0m file
+        #
+        #                 \033[3m./%(prog)s measurements.duckdb measurement.json -d domains/domains.xlsx -m type,name\033[0m
+        #                 same, but fetches additional metadata from the \033[3mtype\033[0m and \033[3mname\033[0m columns in the \033[3mdomains/domains.xlsx\033[0m file
+        #
+        #                 \033[3m./%(prog)s measurements.duckdb measurements/ -d all.xlsx -m type,name,province\033[0m
+        #                 processes all the .json files in the \033[3mmeasurements\033[0m directory and fetches additional metadata from the \033[3mtype,
+        #                 name\033[0m and \033[3mprovince\033[0m columns in the \033[3mall.xlsx\033[0m file, storing the results in the \033[3mmeasurements.duckdb\033[0m database,
+        #                 storing the results in the \033[3mweb\033[0m and/or \033[3mmail\033[0m table(s)
+        #                 '''),
         formatter_class=argparse.RawTextHelpFormatter, )
 
-    # process-results.py [-h] [-d FILE] [-m col[,col1,...]] [-s [sheet_name]] [-v] [--debug] [-V] outputfile {csv|xlsx|duckdb} {json file|json dir}
-    parser.usage = "process-results.py outputfile {csv|xlsx|duckdb} {json file|json dir} [-d FILE] [-m col[,col1,...]]"
-
-    parser.add_argument("outputfile",
-                        help="file name (without extension) to store the results in")
-
-    parser.add_argument("filetype",
-                        metavar='{csv|xlsx|duckdb}',
-                        help=textwrap.dedent('''\
-                        type of \033[3moutputfile\033[0m(s) to produce
-                        '''),
-                        choices=['csv', 'xlsx', 'duckdb'],
-                        action="store",
-                        )
+    # usage: process-results.py [-h] [-d FILE] [-m col[,col1,...]] [-s [sheet_name]] [-r] [-v] [--debug] [-V] {json file|json dir} {csv|xlsx|duckdb} outputfile
+    parser.usage = "process-results.py {json file|json dir} {csv|xlsx|duckdb} outputfile [-d FILE] [-m col[,col1,...]] [-r]"
 
     parser.add_argument("filename",
                         metavar='{json file|json dir}',
                         help=textwrap.dedent('''\
                         the json file, or directory containing json files, with the measurement
-                        results to process and store in the database
+                        results to process
+                        
                         '''),
                         action="store",
                         )
+
+    parser.add_argument("filetype",
+                        metavar='{csv|xlsx|duckdb}',
+                        help=textwrap.dedent('''\
+                        type of \033[3moutputfile\033[0m(s) to produce
+                        
+                        '''),
+                        choices=['csv', 'xlsx', 'duckdb'],
+                        action="store",
+                        )
+
+    parser.add_argument("outputfile",
+                        help="file name (without extension) to store the results in")
 
     parser.add_argument("-d",
                         metavar='FILE',
@@ -132,10 +134,19 @@ def parser_add_arguments():
     parser.add_argument("-s",
                         metavar='[sheet_name]',
                         help=textwrap.dedent('''\
-                        the name of the sheet in FILE to use. Currently unsupported.
+                        the name of the sheet in FILE to use (default is the first sheet)
                         
                         '''),
                         action="store")
+
+    parser.add_argument("-r",
+                        help=textwrap.dedent('''\
+                        Do raw processing of the json file(s).
+                        This will take 
+                         
+
+                        '''),
+                        action="store_true")
 
     parser.add_argument("-v", "--verbose",
                         help="more verbose output",
@@ -229,15 +240,19 @@ def main():
     domains = pd.DataFrame()
     domainsFile = ''
     columns_to_add = []
+    sheet_name = 0
 
-    if args.d is not None:
+    if args.d:
         domainsFile = args.d
         logger.info("taking domains metadata from {}".format(domainsFile))
 
-    if args.m is not None:
+    if args.m:
         columns_to_add = args.m.split(',')
-
     logger.info("metadata columns to add: {}".format(columns_to_add))
+
+    if args.s:
+        sheet_name = args.s
+
 
     filelist = []
     filename = args.filename
@@ -264,68 +279,106 @@ def main():
         logger.error("error processing domains Excel file: {}".format(e))
         exit(1)
 
-    # con = duckdb.connect(database=sys.argv[1], read_only=False)
-
     filelist.sort()
-    # Split in mail and web files
-    files = {'mail': [], 'web': []}
-    for fn in filelist:
-        data = ut.openJSON(fn)
-        files[ut.getMeasurementType(data)].append(fn)
 
-    csvs = {'mail': [], 'web': []}
-    for mt in ['web', 'mail']:
-        header = ''
-        body = []
-        for fn in files[mt]:
+    if args.r:
+        for fn in filelist:
             data = ut.openJSON(fn)
-            logger.info("Processing {}".format(fn))
-            result = ut.JSONtoCSV(data, domains, columns_to_add=columns_to_add)
-            header = result['header']
-            body.append(result['body'])
+            mt = ut.getMeasurementType(data)
+            outputfile = ''.join(fn.split('.')[:-1])
+            result = ut.JSONtoCSVall(data, domains, columns_to_add)
+            # print(result['header'] + '\n' + result['body'])
+            csv = result['header'] + '\n' + result['body']
 
-        body = '\n'.join(body)
+            if args.filetype == 'csv':
+                print("Creating {}.csv".format(outputfile))
+                file = open("{}.csv".format(outputfile), 'w')
+                print(csv, file=file)
+                file.close()
+            elif args.filetype == 'xlsx':
+                print("Creating {}.xlsx file".format(outputfile))
+                tmpfile, tmpfilename = tempfile.mkstemp()
+                with open(tmpfile, 'w') as f:
+                    print(csv, file=f)
+                df = pd.read_csv(tmpfilename)
+                df.sort_values(by=['submit_date', 'score', 'domain'], ascending=False, inplace=True)
+                df.to_excel("{}.xlsx".format(outputfile), index=None, header=True)
 
-        print("Processed {} {} measurements from {} files".format(body.count('\n')+1, mt, len(files[mt])))
-        csvs[mt].append(header + '\n' + body)
+            elif args.filetype == 'duckdb':
+                duckdb_file = "{}.duckdb".format(outputfile)
+                if os.path.isfile(duckdb_file):
+                    print("Removing {}".format(duckdb_file))
+                    os.remove(duckdb_file)
+                print("Creating {}.duckdb file".format(outputfile))
+                con = duckdb.connect(database=duckdb_file, read_only=False)
+                tmpfile, tmpfilename = tempfile.mkstemp()
+                with open(tmpfile, 'w') as f:
+                    print(csv, file=f)
+                con.execute("CREATE TABLE {} AS SELECT * FROM read_csv_auto('{}')".format(mt, tmpfilename))
 
-    if args.filetype == 'csv':
-        for mt in ['web', 'mail']:
-            print("\tcreating to {}-{}.csv".format(outputfile, mt))
-            file = open("{}-{}.csv".format(outputfile, mt), 'w')
-            print(csvs[mt][0], file=file)
-            file.close()
-    elif args.filetype == 'xlsx':
-        print("Creating {}.xlsx file".format(outputfile))
-        for mt in ['web', 'mail']:
-            tmpfile, tmpfilename = tempfile.mkstemp()
-            with open(tmpfile, 'w') as f:
-                print(csvs[mt][0], file=f)
-            df = pd.read_csv(tmpfilename)
-            df.sort_values(by=['submit_date', 'score', 'domain'], ascending=False, inplace=True)
-            print("\tcreating sheet {}".format(mt))
-            df.to_excel("{}.xlsx".format(outputfile), sheet_name=mt,index=None, header=True)
-
-    elif args.filetype == 'duckdb':
-        duckdb_file = "{}.duckdb".format(outputfile)
-        if os.path.isfile(duckdb_file):
-            print("Removing {}".format(duckdb_file))
-            os.remove(duckdb_file)
-        print("Creating {}.duckdb file".format(outputfile))
-        con = duckdb.connect(database=duckdb_file, read_only=False)
-        for mt in ['web', 'mail']:
-            print("\tcreating table {}".format(mt))
-            tmpfile, tmpfilename = tempfile.mkstemp()
-            with open(tmpfile, 'w') as f:
-                print(csvs[mt][0], file=f)
-
-            logger.info("CREATE TABLE {} AS SELECT * FROM read_csv_auto('{}')".format(mt, tmpfilename))
-            con.execute("CREATE TABLE {} AS SELECT * FROM read_csv_auto('{}')".format(mt, tmpfilename))
-
-        con.close()
+                con.close()
     else:
-        print("Creating an {} file unsupported".format(args.filetype))
+        # Split in mail and web files
+        files = {'mail': [], 'web': []}
+        for fn in filelist:
+            data = ut.openJSON(fn)
+            files[ut.getMeasurementType(data)].append(fn)
 
+        csvs = {'mail': [], 'web': []}
+
+        for mt in ['web', 'mail']:
+            header = []
+            body = []
+            for fn in files[mt]:
+                data = ut.openJSON(fn)
+                logger.info("Processing {}".format(fn))
+                result = ut.JSONtoCSV(data, domains, columns_to_add)
+                header.append(result['header'])
+                body.append(result['body'])
+
+            if len(header) > 0:
+                body = '\n'.join(body)
+                header = header[0]
+                print("Processed {} {} measurements from {} files".format(body.count('\n')+1, mt, len(files[mt])))
+                csvs[mt].append(header + '\n' + body)
+
+        if args.filetype == 'csv':
+            for mt in ['web', 'mail']:
+                if len(csvs[mt]) > 0:
+                    print("\tcreating to {}-{}.csv".format(outputfile, mt))
+                    file = open("{}-{}.csv".format(outputfile, mt), 'w')
+                    print(csvs[mt][0], file=file)
+                    file.close()
+        elif args.filetype == 'xlsx':
+            print("Creating {}.xlsx file".format(outputfile))
+            for mt in ['web', 'mail']:
+                if len(csvs[mt]) > 0:
+                    tmpfile, tmpfilename = tempfile.mkstemp()
+                    with open(tmpfile, 'w') as f:
+                        print(csvs[mt][0], file=f)
+                    df = pd.read_csv(tmpfilename)
+                    df.sort_values(by=['submit_date', 'score', 'domain'], ascending=False, inplace=True)
+                    print("\tcreating sheet {}".format(mt))
+                    df.to_excel("{}.xlsx".format(outputfile), sheet_name=mt,index=None, header=True)
+
+        elif args.filetype == 'duckdb':
+            duckdb_file = "{}.duckdb".format(outputfile)
+            if os.path.isfile(duckdb_file):
+                print("Removing {}".format(duckdb_file))
+                os.remove(duckdb_file)
+            print("Creating {}.duckdb file".format(outputfile))
+            con = duckdb.connect(database=duckdb_file, read_only=False)
+            for mt in ['web', 'mail']:
+                if len(csvs[mt]) > 0:
+                    print("\tcreating table {}".format(mt))
+                    tmpfile, tmpfilename = tempfile.mkstemp()
+                    with open(tmpfile, 'w') as f:
+                        print(csvs[mt][0], file=f)
+
+                    logger.info("CREATE TABLE {} AS SELECT * FROM read_csv_auto('{}')".format(mt, tmpfilename))
+                    con.execute("CREATE TABLE {} AS SELECT * FROM read_csv_auto('{}')".format(mt, tmpfilename))
+
+            con.close()
 
 if __name__ == '__main__':
     # Run the main process

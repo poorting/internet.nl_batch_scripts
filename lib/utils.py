@@ -838,3 +838,210 @@ def _JSONtoCSV2_0(data, domains_metadata, columns_to_add):
     # print(body)
 
     return {"header": header, "body": body}
+
+
+# ------------------------------------------------------------------------------
+def JSONtoCSVall(data, domains_metadata, columns_to_add=[]):
+
+    api_version = getAPIversion(data)
+
+    if api_version == '1.1' or api_version == '1.0':
+        return _JSONtoCSVall1_1(data, domains_metadata, columns_to_add=columns_to_add)
+    else:
+        return _JSONtoCSVall2_0(data, domains_metadata, columns_to_add=columns_to_add)
+
+
+# ------------------------------------------------------------------------------
+def _JSONtoCSVall1_1(data, domains_metadata, columns_to_add):
+    """Rework the top-level JSON results to a CSV file with the added metadata from the domains file"""
+
+    logger.info("Structure of this file is API 1.1")
+
+    header = ''
+    body = []
+
+    pp = pprint.PrettyPrinter(indent=4)
+
+    payload = data['data']
+    domains = payload['domains']
+
+    submit_date = datetime.datetime.strptime(payload['submission-date'], '%Y-%m-%dT%H:%M:%S.%f%z')
+    # submit_date = payload['submission-date']
+
+    measurementType = _getMeasurementType1_1(domains)
+    logger.info("Measurement type: {}".format(measurementType))
+    if not domains_metadata.empty:
+        domains_metadata = domains_metadata.set_index(measurementType, inplace=False)
+
+    for domainresults in domains:
+        # line= [{"submit_date": submit_date},]
+        line = [{"submit_date": payload['submission-date']}]
+        domainname = domainresults['domain']
+        line.append({'domain': domainname})
+
+        quarters = [4, 7, 10, 1]
+        if (submit_date.date().month in quarters):
+            Q = quarters.index(submit_date.date().month) + 1
+            YR = submit_date.date().year
+            if Q == 4:
+                YR = YR - 1
+            # print(',quarter={0}Q{1}'.format(YR, Q), end='')
+            line.append({'quarter': int('{0}{1}'.format(YR, Q))})
+            line.append({'q': '{0}Q{1}'.format(YR, Q)})
+        else:
+            line.append({'quarter': 0})
+            line.append({'q': ''})
+
+        line.append({'yearmonth': int('{}'.format(submit_date.strftime('%Y%m')))})
+
+        # add the additional metadata
+        if not domains_metadata.empty:
+            if domainname in domains_metadata.index:
+                for md in columns_to_add:
+                    # check if metadata column exists first
+                    if md in domains_metadata.columns:
+                        line.append({'{}'.format(md): domains_metadata.at[domainname, md]})
+                    else:
+                        line.append({'{}'.format(md): 'unknown'})
+            else:
+                for md in columns_to_add:
+                    line.append({'{}'.format(md): 'unknown'})
+
+        if 'status' in domainresults:
+            line.append({'status': domainresults['status']})
+        else:
+            line.append({'status': ''})
+
+        if 'score' in domainresults:
+            line.append({'score': domainresults['score']})
+        else:
+            line.append({'score': 0})
+
+        if 'categories' in domainresults:
+            dom_cats = domainresults['categories']
+            for dom_cat in dom_cats:
+                line.append({dom_cat['category']: int(dom_cat['passed'])})
+
+        if 'views' in domainresults:
+            dom_views = domainresults['views']
+            for view in dom_views:
+                line.append({view['name']: int(view['result'])})
+
+        if 'link' in domainresults:
+            line.append({'url': domainresults['link']})
+        else:
+            line.append({'url': ''})
+
+        # pp.pprint(line)
+        hdr = []
+        bdy = []
+        for it in line:
+            hdr.append(str(list(it.keys())[0]))
+            bdy.append(str(list(it.values())[0]))
+
+        header = ','.join(hdr)
+        body.append(','.join(bdy))
+
+    body = '\n'.join(body)
+    # print(header)
+    # print(body)
+
+    return {"header": header, "body": body}
+
+
+# ------------------------------------------------------------------------------
+def _JSONtoCSVall2_0(data, domains_metadata, columns_to_add):
+    """Rework the top-level JSON results to a DataFrame with the added metadata from the domains file"""
+
+    logger.info("Structure of this file is API 2.0")
+
+    header = []
+    body = []
+    pp = pprint.PrettyPrinter(indent=4)
+
+    submit_date = datetime.datetime.strptime(data['request']['submit_date'], '%Y-%m-%dT%H:%M:%S.%f%z')
+    domains = data['domains']
+
+    measurementType = _getMeasurementType2_0(domains)
+    logger.info("Measurement type: {}".format(measurementType))
+
+    if not domains_metadata.empty:
+        domains_metadata = domains_metadata.set_index(measurementType, inplace=False)
+
+    for domainname in domains:
+        domainresults = domains[domainname]
+        # line= [{"submit_date": submit_date},]
+        line = [{"submit_date": data['request']['submit_date']}, {'domain': domainname}]
+
+        quarters = [4, 7, 10, 1]
+        if (submit_date.date().month in quarters):
+            Q = quarters.index(submit_date.date().month) + 1
+            YR = submit_date.date().year
+            if Q == 4:
+                YR = YR - 1
+            # print(',quarter={0}Q{1}'.format(YR, Q), end='')
+            line.append({'quarter': int('{0}{1}'.format(YR, Q))})
+            line.append({'q': '{0}Q{1}'.format(YR, Q)})
+        else:
+            line.append({'quarter': 0})
+            line.append({'q': ''})
+
+        line.append({'yearmonth': int('{}'.format(submit_date.strftime('%Y%m')))})
+
+        # add the additional metadata
+        if not domains_metadata.empty:
+            if domainname in domains_metadata.index:
+                for md in columns_to_add:
+                    # check if metadata column exists first
+                    if md in domains_metadata.columns:
+                        line.append({'{}'.format(md): domains_metadata.at[domainname, md]})
+                    else:
+                        line.append({'{}'.format(md): 'unknown'})
+            else:
+                for md in columns_to_add:
+                    line.append({'{}'.format(md): 'unknown'})
+
+        if 'status' in domainresults:
+            line.append({'status': domainresults['status']})
+        else:
+            line.append({'status': ''})
+
+        if 'scoring' in domainresults:
+            line.append({'score': int(domainresults['scoring']['percentage'])})
+        else:
+            line.append({'score': 0})
+
+        # if 'categories' in domainresults:
+        if 'results' in domainresults:
+            dom_cats = domainresults['results']['categories']
+            for cat in dom_cats:
+                line.append({cat: int(dom_cats[cat]['status'] == 'passed')})
+
+            if 'tests' in domainresults['results']:
+                dom_views = domainresults['results']['tests']
+                for view in dom_views:
+                    line.append({view: int(dom_views[view]['status'] == 'passed' or dom_views[view]['status'] == 'warning')})
+
+        # Finally add the link as well
+        if 'report' in domainresults:
+            line.append({'url': domainresults['report']['url']})
+        else:
+            line.append({'url': ''})
+
+        # pp.pprint(line)
+        hdr = []
+        bdy = []
+        for it in line:
+            hdr.append(str(list(it.keys())[0]))
+            bdy.append(str(list(it.values())[0]))
+
+        header.append(','.join(hdr))
+        body.append(','.join(bdy))
+
+    body = '\n'.join(body)
+    header = header[0]
+    # print(header)
+    # print(body)
+
+    return {"header": header, "body": body}
+
