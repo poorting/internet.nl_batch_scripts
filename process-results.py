@@ -101,7 +101,7 @@ def parser_add_arguments():
                         )
 
     parser.add_argument("outputfile",
-                        help="file name (without extension) to store the results in")
+                        help="filename (without extension) to store the results in")
 
     parser.add_argument("-d",
                         metavar='FILE',
@@ -139,11 +139,15 @@ def parser_add_arguments():
                         '''),
                         action="store")
 
-    parser.add_argument("-r",
+    parser.add_argument("-i",
                         help=textwrap.dedent('''\
-                        Do raw processing of the json file(s).
-                        This will take 
-                         
+                        Process the json file(s) individually rather than combining them in a single
+                        output file. The outputfile argument is ignored in this case. The filename(s) of
+                        the output file(s) are equal to the input files with the different extension
+                        depending on specified type of output file.
+                        
+                        As a side effect this option does raw processing of the json file(s), meaning
+                        that all categories and tests are processed rather than just a fixed set. 
 
                         '''),
                         action="store_true")
@@ -281,7 +285,7 @@ def main():
 
     filelist.sort()
 
-    if args.r:
+    if args.i:
         for fn in filelist:
             data = ut.openJSON(fn)
             mt = ut.getMeasurementType(data)
@@ -311,9 +315,12 @@ def main():
                     os.remove(duckdb_file)
                 print("Creating {}.duckdb file".format(outputfile))
                 con = duckdb.connect(database=duckdb_file, read_only=False)
+                print("creating table {}".format(mt))
                 tmpfile, tmpfilename = tempfile.mkstemp()
                 with open(tmpfile, 'w') as f:
                     print(csv, file=f)
+
+                logger.info("CREATE TABLE {} AS SELECT * FROM read_csv_auto('{}')".format(mt, tmpfilename))
                 con.execute("CREATE TABLE {} AS SELECT * FROM read_csv_auto('{}')".format(mt, tmpfilename))
 
                 con.close()
