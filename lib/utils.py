@@ -83,7 +83,7 @@ def getCredentials(option=None):
                    'username': '',
                    'password': ''}
     config = configparser.ConfigParser({}, collections.OrderedDict)
-    config.read('batch-request.conf')
+    config.read('batch.conf')
     if len(config.sections()) == 0:
         # No conf file found, or empty
         # So ask for username and password
