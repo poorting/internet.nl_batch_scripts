@@ -1,13 +1,11 @@
 bokeh==2.3.3
 certifi==2021.5.30
-chardet==4.0.0
+charset-normalizer==2.0.1
 duckdb==0.2.7
 et-xmlfile==1.1.0
-idna==2.10
-influxdb==5.3.1
+idna==3.2
 Jinja2==3.0.1
 MarkupSafe==2.0.1
-msgpack==1.0.2
 numpy==1.21.0
 openpyxl==3.0.7
 packaging==21.0
@@ -17,7 +15,7 @@ pyparsing==2.4.7
 python-dateutil==2.8.1
 pytz==2021.1
 PyYAML==5.4.1
-requests==2.25.1
+requests==2.26.0
 selenium==3.141.0
 six==1.16.0
 tornado==6.1

@@ -7,6 +7,7 @@ import collections
 import json
 import datetime
 import sys
+import calendar
 
 import pandas as pd
 import numpy as np
@@ -134,6 +135,25 @@ def readCredentials(machine='batch.internet.nl', filename='credentials', option=
             break
 
     return credentials
+
+
+# ------------------------------------------------------------------------------
+def Nr2Name(q):
+    # return '{0}Q{1}'.format(str(q)[:4], str(q)[-1])
+    if len(str(q)) > 5:
+        return _Nr2M(q)
+    else:
+        return _Nr2Q(q)
+
+
+# ------------------------------------------------------------------------------
+def _Nr2Q(q):
+    return '{0}Q{1}'.format(str(q)[:4], str(q)[-1])
+
+
+# ------------------------------------------------------------------------------
+def _Nr2M(q):
+    return '{0}\'{1}'.format(calendar.month_abbr[int(str(q)[-2:])], str(q)[2:4])
 
 
 # ------------------------------------------------------------------------------
@@ -395,13 +415,14 @@ def _JSONtoCSV1_1(data, domains_metadata, columns_to_add):
             if Q == 4:
                 YR = YR - 1
             # print(',quarter={0}Q{1}'.format(YR, Q), end='')
-            line.append({'quarter': int('{0}{1}'.format(YR, Q))})
-            line.append({'q': '{0}Q{1}'.format(YR, Q)})
+            line.append({'q': int('{0}{1}'.format(YR, Q))})
+            line.append({'quarter': '{0}Q{1}'.format(YR, Q)})
         else:
-            line.append({'quarter': 0})
-            line.append({'q': ''})
+            line.append({'q': 0})
+            line.append({'quarter': ''})
 
-        line.append({'yearmonth': int('{}'.format(submit_date.strftime('%Y%m')))})
+        line.append({'ym': int('{}'.format(submit_date.strftime('%Y%m')))})
+        line.append({'yearmonth': Nr2Name(int('{}'.format(submit_date.strftime('%Y%m'))))})
 
         # add the additional metadata
         if not domains_metadata.empty:
@@ -504,13 +525,14 @@ def _JSONtoCSV2_0(data, domains_metadata, columns_to_add):
             if Q == 4:
                 YR = YR - 1
             # print(',quarter={0}Q{1}'.format(YR, Q), end='')
-            line.append({'quarter': int('{0}{1}'.format(YR, Q))})
-            line.append({'q': '{0}Q{1}'.format(YR, Q)})
+            line.append({'q': int('{0}{1}'.format(YR, Q))})
+            line.append({'quarter': '{0}Q{1}'.format(YR, Q)})
         else:
-            line.append({'quarter': 0})
-            line.append({'q': ''})
+            line.append({'q': 0})
+            line.append({'quarter': ''})
 
-        line.append({'yearmonth': int('{}'.format(submit_date.strftime('%Y%m')))})
+        line.append({'ym': int('{}'.format(submit_date.strftime('%Y%m')))})
+        line.append({'yearmonth': Nr2Name(int('{}'.format(submit_date.strftime('%Y%m'))))})
 
         # add the additional metadata
         if not domains_metadata.empty:
@@ -627,13 +649,14 @@ def _JSONtoCSVall1_1(data, domains_metadata, columns_to_add):
             if Q == 4:
                 YR = YR - 1
             # print(',quarter={0}Q{1}'.format(YR, Q), end='')
-            line.append({'quarter': int('{0}{1}'.format(YR, Q))})
-            line.append({'q': '{0}Q{1}'.format(YR, Q)})
+            line.append({'q': int('{0}{1}'.format(YR, Q))})
+            line.append({'quarter': '{0}Q{1}'.format(YR, Q)})
         else:
-            line.append({'quarter': 0})
-            line.append({'q': ''})
+            line.append({'q': 0})
+            line.append({'quarter': ''})
 
-        line.append({'yearmonth': int('{}'.format(submit_date.strftime('%Y%m')))})
+        line.append({'ym': int('{}'.format(submit_date.strftime('%Y%m')))})
+        line.append({'yearmonth': Nr2Name(int('{}'.format(submit_date.strftime('%Y%m'))))})
 
         # add the additional metadata
         if not domains_metadata.empty:
@@ -721,13 +744,14 @@ def _JSONtoCSVall2_0(data, domains_metadata, columns_to_add):
             if Q == 4:
                 YR = YR - 1
             # print(',quarter={0}Q{1}'.format(YR, Q), end='')
-            line.append({'quarter': int('{0}{1}'.format(YR, Q))})
-            line.append({'q': '{0}Q{1}'.format(YR, Q)})
+            line.append({'q': int('{0}{1}'.format(YR, Q))})
+            line.append({'quarter': '{0}Q{1}'.format(YR, Q)})
         else:
-            line.append({'quarter': 0})
-            line.append({'q': ''})
+            line.append({'q': 0})
+            line.append({'quarter': ''})
 
-        line.append({'yearmonth': int('{}'.format(submit_date.strftime('%Y%m')))})
+        line.append({'ym': int('{}'.format(submit_date.strftime('%Y%m')))})
+        line.append({'yearmonth': Nr2Name(int('{}'.format(submit_date.strftime('%Y%m'))))})
 
         # add the additional metadata
         if not domains_metadata.empty:
