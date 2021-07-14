@@ -117,27 +117,6 @@ def getCredentials(option=None):
 
 
 # ------------------------------------------------------------------------------
-def readCredentials(machine='batch.internet.nl', filename='credentials', option=None):
-    """Find login credentials for machine from a netrc formatted file"""
-    credentials = {'login': '', 'password': ''}
-    words = []
-
-    with open(filename, 'r') as creds:
-        for line in creds:
-            line = line.strip()
-            words = words + line.split()
-
-    for i in range(0, len(words), 6):
-        endpoint = words[i:i + 6]
-        if endpoint[1].endswith(machine):
-            credentials[endpoint[2]] = endpoint[3]
-            credentials[endpoint[4]] = endpoint[5]
-            break
-
-    return credentials
-
-
-# ------------------------------------------------------------------------------
 def Nr2Name(q):
     # return '{0}Q{1}'.format(str(q)[:4], str(q)[-1])
     if len(str(q)) > 5:
