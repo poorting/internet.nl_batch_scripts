@@ -26,7 +26,7 @@ class ArgumentParser(argparse.ArgumentParser):
     def error(self, message):
         print('\n\033[1;33mError: {}\x1b[0m\n'.format(message))
         print("invoke \033[1m{} -h\033[0m for help\n".format(os.path.basename(__file__)))
-        # self.print_help(sys.stderr)
+        self.print_help(sys.stderr)
         # self.exit(2, '%s: error: %s\n' % (self.prog, message))
         self.exit(2)
 
