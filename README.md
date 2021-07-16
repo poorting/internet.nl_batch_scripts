@@ -11,7 +11,7 @@ With the internet.nl website you can test individual domains, but if you need to
 
 Note that newer versions of the website will allow you to upload a list as well and have it regularly tested via its new [dashboard](https://dashboard.internet.nl) functionality, which suits most use cases. If you want to do some post-processing or other things not provided by the dashboard then these scripts may be useful.
 
-The scripts in this repository allow you to submit domains from an Excel (.xlsx) file to the internet.nl API and process the JSON measurement results to different formats (xlsx, csv or [duckdb](https://duckdb.org/)) for further processing or inspection. 
+The scripts in this repository enable you to submit domains from an Excel (.xlsx) file to the internet.nl API and process the JSON measurement results to different formats (xlsx, csv or [duckdb](https://duckdb.org/)) for further processing or inspection. 
 
 ## Getting started
 
@@ -68,8 +68,8 @@ To submit your domains to the API for testing use the following command:
 ./batch.py  sub {mail|web} -d domains/domains.xlsx [-s sheet_name] [-n name]
 ```
 
-Since the API can test mail or web domains, you have to specify which of the two you want. You can optionally provide the name you want the test to have. The default name is the current date in yyyymmdd format (e.g. 20210716). 
-Depending on the type of measurement (web or mail) the domain information in the corresponding column of the .xlsx file will be used. You can specify the name of the sheet from the .xslx file to use. The first sheet will be used by default. This allows you to have other sheets in the same .xlsx file, for example for testing purposes or simply for having multiple batches of domains in the same file.
+Since the API can test mail or web domains, you have to specify which of the two you want. You can optionally provide the name you want the test to have. The default name if you do not specify one is the current date in yyyymmdd format (e.g. 20210716). 
+Depending on the type of measurement (web or mail) the domain information in the corresponding column of the .xlsx file will be used. You can optionally specify the name of the sheet to use in the .xlsx file. The first sheet will be used by default. This allows you to have other sheets in the same .xlsx file, for example for testing purposes or simply for having multiple batches of domains in the same file.
 
 ### Checking on progress
 Measurements will take some time to complete. 
@@ -93,12 +93,12 @@ Once the status of a request is *'generating'* or *'done'*, the measurements are
 
 The report can be retrieved by using the *get* command with the *request_id*, e.g.:
 ```
-./batch-request get cb7be7ed776e464796cd8514c6e2a0e7
+./batch.py get cb7be7ed776e464796cd8514c6e2a0e7
 ```
 The output will be shown on screen by default unless an output file is specified with the -o argument, e.g.: 
 
 ```
-./batch-request get cb7be7ed776e464796cd8514c6e2a0e7 -o output.json
+./batch.py get cb7be7ed776e464796cd8514c6e2a0e7 -o output.json
 ```
 
 ### Processing the results
@@ -107,7 +107,7 @@ You can process the results with the process.py script, either an individual mea
 
 To process all measurements in the *measurements* directory and store them in the duckdb database *output.duckdb* use:
 ```
-./process-results.py measurements duckdb output
+./process.py measurements duckdb output
 ```
 Mail and web measurements results will be stored in separate tables ('mail' and 'web' respectively).
 
@@ -116,22 +116,22 @@ The script will also add information on the month and quarter of the measurement
 Additional information from the original domain xlsx file can be included by including the domain filename and (optionally) the column(s) to include. With no column specified the default of 'type' will be used.
 To process the same results as in the example above, but now including the information from the 'type' and 'name' columns use:
 ```
-./process-results.py measurements duckdb output -d domains/domains.xlsx -m type,name
+./process.py measurements duckdb output -d domains/domains.xlsx -m type,name
 ```
-Please note that the column names cannot contain spaces.
+Please note that the column names cannot contain spaces and that multiple columns need to be separated by a comma *without spaces* as well.
 
 Measurement results can also be stored in an xlsx file or csv files by replacing *duckdb* in the command above with *xlsx* or *csv*.
 For xlsx the mail and web results will be put into separate sheets ('mail' and 'web'). With csv two separate output files will be produced for the mail and web results.
 
 If you don't want the measurements combined into a single database or file, add the -i flag to the command.
-This will process all json files individually to the specified output type, creating output files with the same name as the json file but with a different extension (depending on output type).
+This will process all json files individually to the specified output type, creating output files with the same name as the json input file but with a different extension reflecting the output type.
 
 ## Creating graphs
 Once you have assembled a number of months (or quarters) worth of measurements you can use them to create graphs that show improvement (hopefully) over time, such as this example over a one year period (5 quarters).
 
 ![Example graph](https://raw.githubusercontent.com/poorting/internet.nl_batch_scripts/master/graphs/Scores-overall.png)
 
-Input data for the graphs is a duckdb database, such as the one created by the commands shown above. The graphs are made using the [bokeh graphics library](https://docs.bokeh.org/en/latest/index.html).
+Input data for the graphs is taken from a duckdb database, such as the one created by the commands shown above. The graphs are made using the [bokeh graphics library](https://docs.bokeh.org/en/latest/index.html).
 
 ### Dependencies
 Bokeh uses Selenium for creating the resulting graphic files (in PNG and SVG format), so you need to have this installed (it is in requirements.txt) as well as a suitable driver (*geckodriver* or *chromedriver* matching your browser version).
@@ -161,11 +161,18 @@ All graphs are written to disk in both *PNG* and *SVG* format. The latter is use
 The graphs produced are:
 * Bar graph of overall scores for web/mail combined in one graph (example above)
 * Bar graph of overall scores for web/mail for every distinct *type* in the data (e.g. 'Uni','Research') **if** *type* data is available. 
+* Bar graph of only the latest scores for web/mail for every distinct *type* in the data (e.g. 'Uni','Research') **if** *type* data is available. 
 * Detailed tables overall, one for mail, one for web.
 * Detailed tables (both web and mail) for every distinct *type* in the data (e.g. 'Uni','Research') **if** *type* data is available.
 * Top 5 'improvers' overall, for both web and mail
 * Bottom 5 'improvers', for both web and mail
 * Top 0 (==all) 'improvers' overall, for both web and mail
+
+Graphs taking *type* into account are of course only made if such data is available in the database. That is: you added it in the process step as shown above. Below an example of the bar graph of only the latest scores for web/mail for every distinct type in the data (in this example 'type 0' to 'type 5') 
+
+![Example graph](https://raw.githubusercontent.com/poorting/internet.nl_batch_scripts/master/graphs/Scores-overall-per-type.png)
+
+
 
 Improvement (or deterioration) is determined by comparing the latest scores with the score of the previous period (month or quarter) for each domain present. Note that this may be more than a month (or quarter) apart if that previous measurement is missing. In other words: the comparison doesn't check whether the previous measurement is a month (or quarter) apart, it will simply use the previous (month/quarter) measurement it finds. To give an idea what an improvers table looks like: The examples below show the top and bottom 5 improvers for 2021Q2 compared to 2021Q1 for mail. 
 
