@@ -6,6 +6,7 @@ import os
 import argparse
 import logging
 from   datetime import date
+import time
 
 import requests
 import textwrap
@@ -94,7 +95,7 @@ def parser_add_arguments():
 
     parser.add_argument("command",
                         help=textwrap.dedent('''\
-                            the request to execute (default: list)
+                            the request to execute
                             
                         '''),
                         action="store",
@@ -132,7 +133,7 @@ def parser_add_arguments():
                         action="store")
 
     parser.add_argument("-s",
-                        metavar='[sheet_name]',
+                        metavar='sheet_name',
                         help=textwrap.dedent('''\
                         the name of the sheet in FILE to use. Only effective in combination with the 
                         \033[3m-d\033[0m argument for the \033[3msub\033[0m command 
@@ -149,6 +150,14 @@ def parser_add_arguments():
                         '''.format(date_now)),
                         action="store")
 
+
+    parser.add_argument('-o',
+                        action="store",
+                        metavar='output file',
+                        help=textwrap.dedent('''\
+                        filename to store the measurement results in for a  \033[3mget\033[0m command. 
+                        Default is to show the results on screen.
+                        '''))
 
     parser.add_argument('-p',
                         action="store",
@@ -234,6 +243,27 @@ def get_logger(args):
 
     return logger
 
+
+# ------------------------------------------------------------------------------
+def call_API(action, credentials, request_id):
+
+    if action == 'list':
+        r = requests.get(credentials['endpoint'],
+                         params={'limit': request_id},
+                         auth=(credentials['username'], credentials['password']))
+    elif action == 'stat':
+        r = requests.get(credentials['endpoint'] + '/' + request_id,
+                         auth=(credentials['username'], credentials['password']))
+    elif action == 'get':
+        r = requests.get(credentials['endpoint'] + '/' + request_id + '/results',
+                         auth=(credentials['username'], credentials['password']))
+    elif action == 'del':
+        r = requests.patch(credentials['endpoint'] + '/' + request_id,
+                           auth=(credentials['username'], credentials['password']))
+
+    return r
+
+
 ###############################################################################
 def main():
     global VERBOSE, DEBUG, logger
@@ -281,6 +311,19 @@ def main():
             print('Please specify a domains xlsx file with -d FILE')
             exit(2)
 
+        try:
+            if domainsFile:
+                # Check if it exists first
+                if os.path.isfile(domainsFile):
+                    domains = pd.read_excel(domainsFile, sheet_name=sheet_name, engine='openpyxl')
+        except Exception as e:
+            logger.error("error processing domains Excel file: {}".format(e))
+            exit(1)
+
+        if parameter not in domains.columns:
+            print("There is no column named '{}' in sheet {} of {}".format(parameter, sheet_name, domainsFile))
+            exit(2)
+
     elif action == 'list':
         if parameter is None:
             request_id = 0
@@ -294,15 +337,6 @@ def main():
                 exit(2)
 
     try:
-        if domainsFile:
-            # Check if it exists first
-            if os.path.isfile(domainsFile):
-                domains = pd.read_excel(domainsFile, sheet_name=sheet_name, engine='openpyxl')
-    except Exception as e:
-        logger.error("error processing domains Excel file: {}".format(e))
-        exit(1)
-
-    try:
         credentials = ut.getCredentials(args.p)
     except KeyboardInterrupt:
         sys.stdout.flush()
@@ -312,22 +346,22 @@ def main():
         print("error opening/processing credentials file: {}".format(e))
         exit(1)
 
-
-
     try:
-        if action == 'list':
-            r = requests.get(credentials['endpoint'],
-                             params={'limit': request_id},
-                             auth=(credentials['username'], credentials['password']))
-        elif action == 'stat':
-            r = requests.get(credentials['endpoint'] + '/' + request_id,
-                             auth=(credentials['username'], credentials['password']))
-        elif action == 'get':
-            r = requests.get(credentials['endpoint'] + '/' + request_id + '/results',
-                             auth=(credentials['username'], credentials['password']))
-        elif action == 'del':
-            r = requests.patch(credentials['endpoint'] + '/' + request_id,
-                               auth=(credentials['username'], credentials['password']))
+        if action == 'get':
+            r = call_API('stat', credentials, request_id)
+            if r.status_code == 200 or r.status_code == 201:
+                req_stat = r.json()['request']['status']
+                if req_stat == 'generating':
+                    while req_stat == 'generating':
+                        print('Status is generating, waiting for it to finish', file=sys.stderr)
+                        time.sleep(5)
+                        r = call_API('stat', credentials, request_id)
+                        req_stat = r.json()['request']['status']
+            if req_stat != 'done':
+                print('Measurement not ready yet')
+                exit(0)
+            r = call_API(action, credentials, request_id)
+
         elif action == 'sub':
             # as name simply use the current date
             if parameter in domains.columns:
@@ -339,6 +373,8 @@ def main():
             else:
                 print("There is no column named '{}' in sheet {} of {}".format(parameter, sheet_name, domainsFile))
                 exit(0)
+        else:
+            r = call_API(action, credentials, request_id)
 
     except Exception as ce:
         print("\n\033[1;33mA {} occurred\x1b[0m\n".format(type(ce).__name__))
@@ -353,7 +389,10 @@ def main():
         elif action == 'stat':
             pp.pprint(r.json()['request'])
         elif action == 'get':
-            print(r.text)
+            file = sys.stdout
+            if args.o:
+                file = open(args.o, 'w')
+            print(r.text, file=file)
         elif action == 'del':
             print('Result = {}'.format(r.status_code))
             pp.pprint(r.json())
