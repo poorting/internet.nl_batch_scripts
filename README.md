@@ -1,7 +1,7 @@
 # Internet.nl helper scripts
 
-Internet.nl is an initiative of the Dutch Internet Standards Platform that helps you to check whether your website and email use
-modern and reliable Internet Standards. And if they don’t, gives suggestions on what needs to be done to improve it.
+Internet.nl is an initiative of the Dutch Internet Standards Platform that helps you check whether your website and email use
+modern and reliable Internet Standards; and if they don’t, gives suggestions on what needs to be done to improve it.
 
 See the [internet.nl](https://internet.nl) website and/or its [source code on github](https://github.com/NLnetLabs/Internet.nl).
 
@@ -11,150 +11,149 @@ With the internet.nl website you can test individual domains, but if you need to
 
 Note that newer versions of the website will allow you to upload a list as well and have it regularly tested via its new [dashboard](https://dashboard.internet.nl) functionality, which suits most use cases. If you want to do some post-processing or other things not provided by the dashboard then these scripts may be useful.
 
-The scripts in this repository allow you to submit domains from an Excel (.xlsx) file to the internet.nl API and convert the resulting JSON results. One script converts the JSON results back to an Excel (.xlsx) file for further processing, another outputs a text file that can be written/imported into an influx database. Not really useful for normal influx purposes, but you can use it for creating different queries to suit your needs.
-
-The ``submit-domains`` script does the submitting bit. With the ``batch-request`` script you can query status and get the results.
-
-The result-to-excel script expects a JSON file and extracts all the information into an .xlsx file of the same name (but different extension), which you can then open using Excel (or other tools/programs/things that can read xlsx files). The script extracts all the top level results and the individual test results from the JSON file. See the [Batch API documentation](https://github.com/NLnetLabs/Internet.nl/blob/master/documentation/batch_http_api.md) for more information on categories and views.
-The script also adds the link at the end of each row that points to the results on internet.nl for the domain on that row. Optionally it can add information from the domains Excel file used for submitting domains, which is useful if that Excel file contains metadata you may need for further processing.
+The scripts in this repository allow you to submit domains from an Excel (.xlsx) file to the internet.nl API and process the JSON measurement results to different formats (xlsx, csv or [duckdb](https://duckdb.org/)) for further processing or inspection. 
 
 ## Getting started
 
 ### Get credentials
 The first and foremost step is to nicely ask vraag@internet.nl or question@internet.nl to be granted access to the Batch API.
 
-Once you have received the account details add the account information to the *credentials* file like so:
+Once you have received the account details add the account information to the batch.conf file like so:
 
 ```
-machine batch.internet.nl login <your_account_name> password <your_account_password>
+[prod]
+username = <your_account_name>
+password = <your_account_password>
 ```
-The scripts will use this information to authenticate to the API when submitting a request or retrieving results.
+The batch.py script will use this information to authenticate to the API.
 
 ### Setting up the basics
-Then you have to prepare the .xlsx file to contain the domains you want to batch test.
+You have to prepare an .xlsx file to contain the domains you want to batch test. The easiest approach is to simply modify the provided example domains/domains.xlsx file.
 
-Each line can contain 3 fields: the domain to be used for a web test, the domain to be used for a mail test, and a 'sector/type' field you can use to distinguish between various domains. This can be useful to group domains, for example per department responsible or the type of organisation.
+Each line can contain 4 fields: The name, the domain to be used for a web test, the domain to be used for a mail test, and a 'sector/type' field that is used to distinguish between various domains. This can be useful to group domains, for example per department responsible or the type of organisation, and is also used to produce different graphs.
 
-### Submitting to the API
+### Calling the API
+With batch.py you can call the API to perform various tasks: submitting a new batch measurement request,list the batch requests, get the status of an individual request, delete an outstanding request (e.g. if it is blocking further measurements) and finally retrieve the results of a specific batch measurement.
+The script will use the information from the batch.conf file to authenticate against the API.
+
+```
+usage: batch.py [-h] [-d FILE] [-s [sheet_name]] [-n name] [-p [SECTION]] [-v] [--debug] [-V] {sub,list,stat,get,del} [parameter]
+
+Utility for interacting with the batch requests API of internet.nl
+
+The following commands are supported:
+
+ sub  - submit a new batch request 
+ list - list all or some of the batch requests 
+ stat - get the status of a specific request
+ get  - retrieve the results of a request
+ del  - delete a request
+
+positional arguments:
+  {sub,list,stat,get,del}
+                        the request to execute (default: list)
+                        
+  parameter             extra parameter for the request, type and meaning depend on the request:
+                        
+                        sub          (required): {web|mail} the type of measurement to submit
+                        list         (optional): the number of items to list (default: 0 = all)
+                        stat,get,del (required): the request_id for the stat,get or del request
+
+```
+
+### Submitting a measurement request
 
 To submit your domains to the API for testing use the following command:
 ```
-./submit-domains.py  <mail|web> [name = 'Test'] [domains file = 'domains/domains.xlsx'] [sheet_name=0]
+./batch.py  sub {mail|web} -d domains/domains.xlsx [-s sheet_name] [-n name]
 ```
 
-Since the API can test mail or web domains, you have to specify which of the two you want. You can optionally follow that with the name you want the test to have and the location where the .xlsx file to use is. If the defaults are fine by you then simply invoking the script followed by mail or web will do nicely. Depending on the type of measurement (web or mail) the domain information in the corresponding column of the .xlsx file will be used. You can specify the name of the sheet from the .xslx file to use as the final argument. If you specify nothing the first sheet will be used by default. This allows you to have other sheets in the same .xlsx file, for example for testing purposes or simply for having multiple batches of domains in the same file rather than multiple ones.
+Since the API can test mail or web domains, you have to specify which of the two you want. You can optionally provide the name you want the test to have. The default name is the current date in yyyymmdd format (e.g. 20210716). 
+Depending on the type of measurement (web or mail) the domain information in the corresponding column of the .xlsx file will be used. You can specify the name of the sheet from the .xslx file to use. The first sheet will be used by default. This allows you to have other sheets in the same .xlsx file, for example for testing purposes or simply for having multiple batches of domains in the same file.
 
-The script will use the information from the credentials file to authenticate against the API and submit the list of domains.
+### Checking on progress
+Measurements will take some time to complete. 
+Use the *list* command to get an overview of all the known batch requests. 
+
+```
+./batch.py list
+```
+
+The latest requests will be listed first. You can limit the number of requests returned by specifying a limit as an argument (`./batch.py list 1`). Default is to list all.
+
+To check the status of a specific request, use the *stat* command together with the *request_id* as provided in the output of the *list* command.
+
+```
+./batch.py stat 48ba299abef547049c48c826782f95f4
+```
+
 
 ### Retrieving the results
+Once the status of a request is *'generating'* or *'done'*, the measurements are ready.
 
-Measurements will take some time to complete. The batch-request script can be used to check on the progress. With this script you can list the batch requests, get the status of an individual request, delete an outstanding request (e.g. if it is blocking further measurements) and finally retrieve the results of a specific batch measurement.
-
-```
-Usage:
-./batch-request.py  <list|stat|get|del> [<limit|request_id>]
-
-./batch-request.py  list [limit]         - lists the requests, up to [limit] results. default/0 is all
-./batch-request.py  stat <request_id>    - gets the status of the request
-./batch-request.py  get <request_id>     - gets the results of the request
-./batch-request.py  del <request_id>     - cancels the request
-```
-
-Use the *list* command to get an overview of all the known batch request. The latest requests will be listed first. You can limit the number of requests returned by specifying a limit as an argument. Default is to list all.
-
-Using the request_id for a specific batch (from the *list* command) you can use the *stat* command to get the status of that specific batch request. You can use either the *list* of the *stat* command to check on the status of requests (the format of the output is the same), but note that just using the *list* command will not trigger generating the report. That is: a batch measurement will stop at the status 'generating' if you only use the *list* command. Retrieving the status of that individual request using the *stat* command will trigger the generation of the report. 
-
-### Processing the results
-Once the status is 'done', the report can be retrieved by using the *get* command, e.g.:
+The report can be retrieved by using the *get* command with the *request_id*, e.g.:
 ```
 ./batch-request get cb7be7ed776e464796cd8514c6e2a0e7
 ```
-This will retrieve the results of the measurement batch identified by ``cb7be7ed776e464796cd8514c6e2a0e7``.<br/>You can put the results in a file by redirecting the output, e.g.:
+The output will be shown on screen by default unless an output file is specified with the -o argument, e.g.: 
 
 ```
-./batch-request <request_id> > output.json
-```
-The 'result-to-xlsx' script can be used to convert the JSON file to an .xlsx file containing all the measurement results.
-
-```
-./result-to-xlsx.py  <JSON results file|JSON results directory> [domains xlsx file] [metadata_column_name[,md_col_name2, ...]]
-```
-The first argument is the JSON file you just created by redirecting the output. You can also refer to a directory in which case the script will convert all the .json files it finds there. Optionally you can specify the domains .xlsx file you used to submit the original measurement. If you specify a domains file then the script will add the 'type' information from that file (from the column of the same name) to every domain it reads the results of. If you don't need some sort of organisation into groups or types for further processing then there is no need to specify the domains file, but if you would like that information present in the resulting .xlsx (for example because you want to order the result by type), then obviously you do. You can specify multiple columns from the domains xlsx file to be combined in this way by separating the column names with a comma. As an example: to combine information from a *Name* and *type* column with the measurement results the command would be:
-
-```
-./results-to-xslx.py test.json domains/domains.xlsx type,Name
+./batch-request get cb7be7ed776e464796cd8514c6e2a0e7 -o output.json
 ```
 
+### Processing the results
+
+You can process the results with the process.py script, either an individual measurement batch by specifying a single json file or multiple batches by specifying a directory containing multiple json files.
+
+To process all measurements in the *measurements* directory and store them in the duckdb database *output.duckdb* use:
+```
+./process-results.py measurements duckdb output
+```
+Mail and web measurements results will be stored in separate tables ('mail' and 'web' respectively).
+
+The script will also add information on the month and quarter of the measurements (yyyyQ#, e.g. 2020Q4). Please note that a measurement done in the months 1,4,7,10 (January, April, July, October) will be marked as measurements for the *preceding* quarter. So a measurement in January 2021 will be marked as a 2020Q4 measurement. It helps to do measurements roughly on the same day of the month/quarter. If you want to do quarter measurements then do them at the start of January, April, July, and October.
+
+Additional information from the original domain xlsx file can be included by including the domain filename and (optionally) the column(s) to include. With no column specified the default of 'type' will be used.
+To process the same results as in the example above, but now including the information from the 'type' and 'name' columns use:
+```
+./process-results.py measurements duckdb output -d domains/domains.xlsx -m type,name
+```
 Please note that the column names cannot contain spaces.
 
-The script will automatically detect if the results are for a web or a mail type measurement.
+Measurement results can also be stored in an xlsx file or csv files by replacing *duckdb* in the command above with *xlsx* or *csv*.
+For xlsx the mail and web results will be put into separate sheets ('mail' and 'web'). With csv two separate output files will be produced for the mail and web results.
 
-If all is well then the script will output the xlsx formatted results to a file with the same name(s) as the .json file but with an .xlsx extension.
+If you don't want the measurements combined into a single database or file, add the -i flag to the command.
+This will process all json files individually to the specified output type, creating output files with the same name as the json file but with a different extension (depending on output type).
 
 ## Creating graphs
 Once you have assembled a number of months (or quarters) worth of measurements you can use them to create graphs that show improvement (hopefully) over time, such as this example over a one year period (5 quarters).
 
 ![Example graph](https://raw.githubusercontent.com/poorting/internet.nl_batch_scripts/master/graphs/Scores-overall.png)
 
-The graphs are created using influxdb for storage. Relevant data for graphs is extracted using InfluxQL and Panda dataframes. The graphs are made using the [bokeh graphics library](https://docs.bokeh.org/en/latest/index.html).
+Input data for the graphs is a duckdb database, such as the one created by the commands shown above. The graphs are made using the [bokeh graphics library](https://docs.bokeh.org/en/latest/index.html).
 
 ### Dependencies
 Bokeh uses Selenium for creating the resulting graphic files (in PNG and SVG format), so you need to have this installed (it is in requirements.txt) as well as a suitable driver (*geckodriver* or *chromedriver* matching your browser version).
 
-A minimal dockerized influxdb is provided in the influxdb directory, which is all you need for creating graphs. You can start it with the usual *docker-compose up/down (-d)* commands. If you want to use your browser to explore the influxdb data produced you can use the [influxdata sandbox](https://github.com/influxdata/sandbox), which provides a more complete influx stack; including *chronograf* for exploring the data.
-
-### Creating influxdb data
-Assuming you have all the JSON measurement results in a separate directory *measurements*, you can use the ``result-to-influx.py`` to convert all the JSON files in one go to a file that can be imported into influx. 
-
-```
-./result-to-influx.py measurements domains/domains.xlsx type
-```
-This will combine the data from the measurements with the data form the domains.xlsx file (from the *type* column). The data in the type column can be useful if you have domains from different groups or of different types. In my case this is used to differentiate between universities, applied universities, vocational colleges and research institutes for example. Use single words for these in the domains file (e.g. 'Uni','Research', etc.), see the example domains.xlsx to get the idea.
-
-The type will later be used to create graphs for every *type* as well as an overall graph for all types combined.
-
-If you don't have a need for differentiating then you can leave out the domains file and type:
-```
-./result-to-influx.py measurements
-```
-The script will also add information on the month and quarter of the measurements (yyyyQ#, e.g. 2020Q4). Please note that a measurement done in the months 1,4,7,10 (January, April, July, October) will be marked as measurements for the *preceding* quarter. So a measurement in January 2021 will be marked as a 2020Q4 measurement. It helps to do measurements roughly on the same day of the month/quarter. If you want to do quarter measurements then do them at the start of January, April, July, and October.
-
-### Ingesting the data
-If all goes well the script will output all the lines of data in the influxdb line format. You can ingest this information into influxdb by piping it to the ``influx-ingest`` script:
-
-```
-./result-to-influx.py measurements domains/domains.xlsx type | ./influx-ingest DATABASE
-```
-Where DATABASE is the name of the database you want to use. This will be created by the script; meaning that if it already exists it will be overwritten (and previous data lost).
-
-Piping it will ingest the data line by line, which is painfully slow. A much quicker way is to first redirect the output to a file and then ingesting the complete file in one go:
-
-```
-./result-to-influx.py measurements domains/domains.xlsx type > measurements/influxdb.csv
-
-./influx-ingest DATABASE measurements/influxdb.csv
-```
-
 ### Creating the graphs
-With the data present in influxdb, `influx-to-graphs.py` will produce the graphs. 
-They will be written to the current directory, so create a suitable subdirectory to avoid clutter.
+With the data present in the duckdb file, `graphs.py` will produce the graphs in the specified output directory:
 
 ```
-mkdir graphs
-cd graphs
-../influx-to-graphs.py DATABASE
+./graphs.py output.duckdb graphs
 ```
-By default it will produce quarterly data for the past 5 quarters (so one whole year), or fewer if not enough data is present.
+By default, it will produce graphs for the latest 5 months present in the database (or fewer months if not enough data is present). The number of months to consider can be specified by adding a number to the command.
 
-You can change this to months and change the number of periods it takes into account.
 To produce graphs for the previous six months:
 ```
-../influx-to-graphs.py DATABASE months 6
+./graphs.py output.duckdb graphs 6
 ```
-To produce graphs for the previous 3 quarters:
+
+To produce graphs for the last N quarters instead of the last N months, add the -q flag:
 ```
-../influx-to-graphs.py DATABASE quarter 3
+./graphs.py output.duckdb graphs 6 -q
 ```
+
 If fewer periods are present in the database than you specify, the maximum period of available data will be used. Also, if intermediate measurement series are missing these will be skipped. So for example: If the database is missing a quarter (e.g. contains 2020Q1, 2020Q2, 2020Q3, 2021Q1; so is missing 2020Q4), the graphs will be produced using data that **is** available and ignore the missing quarter, this is also the case for the 'top improvers' tables (see below).
 
 All graphs are written to disk in both *PNG* and *SVG* format. The latter is useful for presentations or printed materials since *SVG* is a scalable format, meaning you can enlarge the graphs without losing quality. *PNG* is more widely supported though, and is good enough for most cases.
@@ -165,16 +164,20 @@ The graphs produced are:
 * Detailed tables overall, one for mail, one for web.
 * Detailed tables (both web and mail) for every distinct *type* in the data (e.g. 'Uni','Research') **if** *type* data is available.
 * Top 5 'improvers' overall, for both web and mail
+* Bottom 5 'improvers', for both web and mail
 * Top 0 (==all) 'improvers' overall, for both web and mail
 
-Improvement (or deterioration) is determined by comparing the latest scores with the score of the previous period (month or quarter) for each domain present. Note that this may be more than a month (or quarter) apart if that previous measurement is missing. In other words: the comparison doesn't check whether the previous measurement is a month (or quarter) apart, it will simply use the previous (month/quarter) measurement it finds. To give an idea what an improvers table looks like: The example below shows the top 5 improvers for 2021Q1 compared to 2020Q4 for mail. 
+Improvement (or deterioration) is determined by comparing the latest scores with the score of the previous period (month or quarter) for each domain present. Note that this may be more than a month (or quarter) apart if that previous measurement is missing. In other words: the comparison doesn't check whether the previous measurement is a month (or quarter) apart, it will simply use the previous (month/quarter) measurement it finds. To give an idea what an improvers table looks like: The examples below show the top and bottom 5 improvers for 2021Q2 compared to 2021Q1 for mail. 
 
 ![Example graph](https://raw.githubusercontent.com/poorting/internet.nl_batch_scripts/master/graphs/Top5%20mail.png)
+![Example graph](https://raw.githubusercontent.com/poorting/internet.nl_batch_scripts/master/graphs/Bottom5%20mail.png)
 
-The number between brackets after the domain names is the difference in the total score for that domain (2021Q1) compared to the previous period (2020Q4). 
+The number between brackets after the domain names is the difference in the total score for that domain (2021Q2) compared to the previous period (2021Q1). 
 
-Green squares mean a 'pass' for a topic (e.g. IPv6), red squares denote a 'fail'. A lighter colour square means it changed compared to the previous period. So a light green square denotes a 'pass' where the previous period it was a 'fail' (IPv6 and DNSSEC for xyz.nl in the example).
-Similarly, a light red square means a 'fail' where the previous period it was a 'pass'. In essence: light green squares are improvements, light red squares are deteriorations.
+Green squares mean a 'pass' for a topic (e.g. IPv6), red squares denote a 'fail'. A lighter colour square means it changed compared to the previous period. So a light green square denotes a 'pass' where the previous period it was a 'fail' (DNSSEC for the first domain in the left example).
+Similarly, a light red square means a 'fail' where the previous period it was a 'pass' (DKIM for the first domain in the right example).
+
+In essence: light green squares are improvements, light red squares are deteriorations.
 
 
 ## License
