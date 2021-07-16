@@ -357,15 +357,16 @@ def main():
                     file.close()
         elif args.filetype == 'xlsx':
             print("Creating {}.xlsx file".format(outputfile))
-            for mt in ['web', 'mail']:
-                if len(csvs[mt]) > 0:
-                    tmpfile, tmpfilename = tempfile.mkstemp()
-                    with open(tmpfile, 'w') as f:
-                        print(csvs[mt][0], file=f)
-                    df = pd.read_csv(tmpfilename)
-                    df.sort_values(by=['submit_date', 'score', 'domain'], ascending=False, inplace=True)
-                    print("\tcreating sheet {}".format(mt))
-                    df.to_excel("{}.xlsx".format(outputfile), sheet_name=mt,index=None, header=True)
+            with pd.ExcelWriter('output.xlsx') as writer:
+                for mt in ['web', 'mail']:
+                    if len(csvs[mt]) > 0:
+                        tmpfile, tmpfilename = tempfile.mkstemp()
+                        with open(tmpfile, 'w') as f:
+                            print(csvs[mt][0], file=f)
+                        df = pd.read_csv(tmpfilename)
+                        df.sort_values(by=['submit_date', 'score', 'domain'], ascending=False, inplace=True)
+                        print("\tcreating sheet {}".format(mt))
+                        df.to_excel(writer, sheet_name=mt,index=None, header=True)
 
         elif args.filetype == 'duckdb':
             duckdb_file = "{}.duckdb".format(outputfile)
