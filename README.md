@@ -134,7 +134,7 @@ Once you have assembled a number of months (or quarters) worth of measurements y
 Input data for the graphs is taken from a duckdb database, such as the one created by the commands shown above. The graphs are made using the [bokeh graphics library](https://docs.bokeh.org/en/latest/index.html).
 
 ### Dependencies
-Bokeh uses Selenium for creating the resulting graphic files (in PNG and SVG format), so you need to have this installed (it is in requirements.txt) as well as a suitable driver ([*geckodriver*](https://github.com/mozilla/geckodriver/releases){:target="_blank" rel="noopener"} or [*chromedriver*](https://chromedriver.chromium.org/downloads){:target="_blank" rel="noopener"}). 
+Bokeh uses Selenium for creating the resulting graphic files (in PNG and SVG format), so you need to have this installed (it is in requirements.txt) as well as a suitable driver ([*geckodriver*](https://github.com/mozilla/geckodriver/releases) or [*chromedriver*](https://chromedriver.chromium.org/downloads)). 
 
 **NB: Note that the drivers must be the same version as the browser you are using!**
 
