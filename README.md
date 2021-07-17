@@ -5,23 +5,27 @@ modern and reliable Internet Standards; and if they don’t, gives suggestions o
 
 See the [internet.nl](https://internet.nl) website and/or its [source code on github](https://github.com/NLnetLabs/Internet.nl).
 
-###Table of Contents
-  - [Quick introduction](#quick-introduction)
-  - [Getting started](#getting-started)
-    - [Get credentials](#get-credentials)
-    - [Setting up the basics](#setting-up-the-basics)
-    - [Calling the API](#calling-the-api)
-    - [Submitting a measurement request](#submitting-a-measurement-request)
-    - [Checking on progress](#checking-on-progress)
-    - [Retrieving the results](#retrieving-the-results)
-    - [Processing the results](#processing-the-results)
-  - [Creating graphs](#creating-graphs)
-    - [Dependencies](#dependencies)
-    - [Creating the graphs](#creating-the-graphs)
+### Table of Contents
+- [Internet.nl helper scripts](#internetnl-helper-scripts)
+    + [Table of Contents](#table-of-contents)
+  * [Quick introduction](#quick-introduction)
+  * [Getting started](#getting-started)
+    + [Get credentials](#get-credentials)
+    + [Setting up the basics](#setting-up-the-basics)
+  * [Using the helper scripts](#using-the-helper-scripts)
+    + [Calling the API](#calling-the-api)
+    + [Submitting a measurement request](#submitting-a-measurement-request)
+    + [Checking on progress](#checking-on-progress)
+    + [Retrieving the results](#retrieving-the-results)
+    + [Processing the results](#processing-the-results)
+      - [Storing as duckdb](#storing-as-duckdb)
+      - [Storing as other formats](#storing-as-other-formats)
+      - [Including metadata](#including-metadata)
+  * [Creating graphs](#creating-graphs)
+    + [Dependencies](#dependencies)
+    + [Creating the graphs](#creating-the-graphs)
       - [Graph types](#graph-types)
-  - [License](#license)
-
-
+  * [License](#license)
 
 ## Quick introduction
 
@@ -49,6 +53,8 @@ The batch.py script will use this information to authenticate to the API.
 You have to prepare an .xlsx file to contain the domains you want to batch test. The easiest approach is to simply modify the provided example domains/domains.xlsx file.
 
 Each line can contain 4 fields: The name, the domain to be used for a web test, the domain to be used for a mail test, and a 'sector/type' field that is used to distinguish between various domains. This can be useful to group domains, for example per department responsible or the type of organisation, and is also used to produce different graphs.
+
+## Using the helper scripts
 
 ### Calling the API
 With batch.py you can call the API to perform various tasks: submitting a new batch measurement request,list the batch requests, get the status of an individual request, delete an outstanding request (e.g. if it is blocking further measurements) and finally retrieve the results of a specific batch measurement.
@@ -123,6 +129,7 @@ The output will be shown on screen by default unless an output file is specified
 
 You can process the results with the process.py script, either an individual measurement batch by specifying a single json file or multiple batches by specifying a directory containing multiple json files.
 
+#### Storing as duckdb
 To process all measurements in the *measurements* directory and store them in the duckdb database *output.duckdb* use:
 ```
 ./process.py measurements duckdb output
@@ -130,6 +137,15 @@ To process all measurements in the *measurements* directory and store them in th
 Mail and web measurements results will be stored in separate tables ('mail' and 'web' respectively).
 
 The script will also add information on the month and quarter of the measurements (yyyyQ#, e.g. 2020Q4). Please note that a measurement done in the months 1,4,7,10 (January, April, July, October) will be marked as measurements for the *preceding* quarter. So a measurement in January 2021 will be marked as a 2020Q4 measurement. It helps to do measurements roughly on the same day of the month/quarter. If you want to do quarter measurements then do them at the start of January, April, July, and October.
+
+#### Storing as other formats
+
+Measurement results can also be stored in an xlsx file or csv files by replacing *duckdb* in the command above with *xlsx* or *csv*.
+For xlsx the mail and web results will be put into separate sheets ('mail' and 'web'). With csv two separate output files will be produced for the mail and web results.
+
+If you don't want the measurements combined into a single database or file, add the -i flag to the command.
+This will process all json files individually to the specified output type, creating output files with the same name as the json input file but with a different extension reflecting the output type.
+
 
 #### Including metadata
 Additional information from the original domain xlsx file can be included by specifying the domain filename and (optionally) the column(s) to include. With no column specified the default of 'type' will be used.
@@ -142,11 +158,6 @@ Please note that the column names cannot contain spaces and that multiple column
 
 Metadata fields in the output database are named *md_\<column\>* to distinguish them from the regular fields. So for the example above, the metadata fields will be called *md_type* and *md_name*.
 
-Measurement results can also be stored in an xlsx file or csv files by replacing *duckdb* in the command above with *xlsx* or *csv*.
-For xlsx the mail and web results will be put into separate sheets ('mail' and 'web'). With csv two separate output files will be produced for the mail and web results.
-
-If you don't want the measurements combined into a single database or file, add the -i flag to the command.
-This will process all json files individually to the specified output type, creating output files with the same name as the json input file but with a different extension reflecting the output type.
 
 ## Creating graphs
 Once you have assembled a number of months (or quarters) worth of measurements you can use them to create graphs that show improvement (hopefully) over time, such as this example over a one year period (5 quarters).
