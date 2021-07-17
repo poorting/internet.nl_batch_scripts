@@ -18,6 +18,7 @@ See the [internet.nl](https://internet.nl) website and/or its [source code on gi
   - [Creating graphs](#creating-graphs)
     - [Dependencies](#dependencies)
     - [Creating the graphs](#creating-the-graphs)
+      - [Graph types](#graph-types)
   - [License](#license)
 
 
