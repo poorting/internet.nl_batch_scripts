@@ -172,8 +172,14 @@ Graphs taking *type* into account are of course only made if such data is availa
 
 ![Example graph](https://raw.githubusercontent.com/poorting/internet.nl_batch_scripts/master/graphs/Scores-overall-per-type.png)
 
+The overall score graphs for the different types use different colour schemes per type. Six different colour schemes are available, so some colour schemes will be duplicated if you have more than six different *types*. 
 
+The detailed tables provide a visual overview of how well the domains did on the main categories tested: IPv6, DNSSEC and TLS for *web*. IPv6, DNSSEC, STARTTLS, SPF, DKIM and DMARC for *mail*. A green colour denotes a 'pass' for a category, red denotes a 'fail'. 
 
+![Example graph](https://raw.githubusercontent.com/poorting/internet.nl_batch_scripts/master/graphs/Details-type%201-web.png)
+![Example graph](https://raw.githubusercontent.com/poorting/internet.nl_batch_scripts/master/graphs/Details-type%201-mail.png)
+
+The 'improvement' table graphs show if the domains improved or deteriorated over time.
 Improvement (or deterioration) is determined by comparing the latest scores with the score of the previous period (month or quarter) for each domain present. Note that this may be more than a month (or quarter) apart if that previous measurement is missing. In other words: the comparison doesn't check whether the previous measurement is a month (or quarter) apart, it will simply use the previous (month/quarter) measurement it finds. To give an idea what an improvers table looks like: The examples below show the top and bottom 5 improvers for 2021Q2 compared to 2021Q1 for mail. 
 
 ![Example graph](https://raw.githubusercontent.com/poorting/internet.nl_batch_scripts/master/graphs/Top5%20mail.png)
