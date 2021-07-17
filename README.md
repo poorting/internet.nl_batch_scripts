@@ -131,7 +131,7 @@ Mail and web measurements results will be stored in separate tables ('mail' and 
 The script will also add information on the month and quarter of the measurements (yyyyQ#, e.g. 2020Q4). Please note that a measurement done in the months 1,4,7,10 (January, April, July, October) will be marked as measurements for the *preceding* quarter. So a measurement in January 2021 will be marked as a 2020Q4 measurement. It helps to do measurements roughly on the same day of the month/quarter. If you want to do quarter measurements then do them at the start of January, April, July, and October.
 
 #### Including metadata
-Additional information from the original domain xlsx file can be included by including the domain filename and (optionally) the column(s) to include. With no column specified the default of 'type' will be used.
+Additional information from the original domain xlsx file can be included by specifying the domain filename and (optionally) the column(s) to include. With no column specified the default of 'type' will be used.
 To process the same results as in the example above, but now including the information from the 'type' and 'name' columns use:
 ```
 ./process.py measurements duckdb output -d domains/domains.xlsx -m type,name
@@ -139,6 +139,7 @@ To process the same results as in the example above, but now including the infor
 
 Please note that the column names cannot contain spaces and that multiple columns need to be separated by a comma *without spaces* as well.
 
+Metadata fields in the output database are named *md_\<column\>* to distinguish them from the regular fields. So for the example above, the metadata fields will be called *md_type* and *md_name*.
 
 Measurement results can also be stored in an xlsx file or csv files by replacing *duckdb* in the command above with *xlsx* or *csv*.
 For xlsx the mail and web results will be put into separate sheets ('mail' and 'web'). With csv two separate output files will be produced for the mail and web results.
