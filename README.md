@@ -5,6 +5,22 @@ modern and reliable Internet Standards; and if they don’t, gives suggestions o
 
 See the [internet.nl](https://internet.nl) website and/or its [source code on github](https://github.com/NLnetLabs/Internet.nl).
 
+  - [Quick introduction](#quick-introduction)
+  - [Getting started](#getting-started)
+    - [Get credentials](#get-credentials)
+    - [Setting up the basics](#setting-up-the-basics)
+    - [Calling the API](#calling-the-api)
+    - [Submitting a measurement request](#submitting-a-measurement-request)
+    - [Checking on progress](#checking-on-progress)
+    - [Retrieving the results](#retrieving-the-results)
+    - [Processing the results](#processing-the-results)
+  - [Creating graphs](#creating-graphs)
+    - [Dependencies](#dependencies)
+    - [Creating the graphs](#creating-the-graphs)
+  - [License](#license)
+
+
+
 ## Quick introduction
 
 With the internet.nl website you can test individual domains, but if you need to test more domains (more than a few anyway) then it's probably easier to use the batch API of internet.nl instead. You can request access to the batch API by sending a mail to internet.nl at question@internet.nl or vraag@internet.nl
