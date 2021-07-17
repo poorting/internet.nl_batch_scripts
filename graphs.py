@@ -42,7 +42,7 @@ paletteBR = list(reversed(all_palettes['PuRd'][9]))[1:]
 paletteOrg = list(reversed(all_palettes['Oranges'][9]))[1:]
 paletteSector = all_palettes['Set2'][8]
 paletteHeatmap = ["#c10000", "#00a100"]
-paletteTop5 = ["#ff0000", "#c10000", "#00a100", "#00ff00"]
+paletteDelta = ["#ff0000", "#c10000", "#00a100", "#00ff00"]
 
 type_palettes = [paletteR, paletteRG, paletteBG, paletteOrg, paletteB, paletteG]
 
@@ -364,14 +364,13 @@ def scoreLastPeriod_type(context, db_con):
 
     ret_dfs = []
 
-    print("Score last period per {} ({})".format(context['type'], context['end_period_str']))
+    print("Score last period per value of {} ({})".format(context['type'], context['end_period_str']))
 
     df_mw = []
 
     for tbl in context['tables']:
-        query = "SELECT max({4}) as '{4}', {1} from {0} where {2}=={3} group by {4} order by {4} asc".format(
+        query = "SELECT max(md_{4}) as '{4}', {1} from {0} where {2}=={3} and md_{4}!='<unknown>' group by md_{4} order by md_{4} desc".format(
             tbl, qry_items_score[tbl], context['period_col'], context['end_period'], context['type'])
-        # print('\n'+query)
         df_mw.append(db_con.execute(query).fetchdf())
 
     df = df_mw[0]
@@ -379,7 +378,7 @@ def scoreLastPeriod_type(context, db_con):
         df_mw[1].drop(context['type'], axis=1, inplace=True)
         df = pd.concat(df_mw, axis=1)
 
-    title = 'Results per {} ({})'.format(context['type'], context['end_period_str'])
+    title = 'Results per value of {} ({})'.format(context['type'], context['end_period_str'])
     filename = "{}/Scores-overall-per-{}".format(context['output_dir'], context['type'])
     p = createBarGraph(df, title=title, palette=paletteSector)
     p.output_backend = "svg"
@@ -460,7 +459,7 @@ def deltaToPrevious(context, db_con):
         dfBot = df.tail(5).copy()
 
         print("\tDelta for all ({}, {}-{})".format(tbl, context['prev_period_str'], context['end_period_str']))
-        p = createHeatmap(df, palette=paletteTop5, rangemin=-1, rangemax=2,
+        p = createHeatmap(df, palette=paletteDelta, rangemin=-1, rangemax=2,
                           title='Delta ({0}, {1}-{2})'.format(tbl, context['prev_period_str'], context['end_period_str']),
                           incsign=True)
         p.output_backend = "svg"
@@ -468,7 +467,7 @@ def deltaToPrevious(context, db_con):
         export_png(p, filename='{}/Delta-all-{}.png'.format(context['output_dir'], tbl))
 
         print("\tTop 5 ({}, {}-{})".format(tbl, context['prev_period_str'], context['end_period_str']))
-        p = createHeatmap(dfTop, palette=paletteTop5, rangemin=-1, rangemax=2,
+        p = createHeatmap(dfTop, palette=paletteDelta, rangemin=-1, rangemax=2,
                           title="Top 5 \n({0}, {1}-{2})".format(tbl, context['prev_period_str'], context['end_period_str']),
                           incsign=True)
         p.output_backend = "svg"
@@ -476,7 +475,7 @@ def deltaToPrevious(context, db_con):
         export_png(p, filename='{}/Delta-top-5-{}.png'.format(context['output_dir'], tbl))
 
         print("\tBottom 5 ({}, {}-{})".format(tbl, context['prev_period_str'], context['end_period_str']))
-        p = createHeatmap(dfBot, palette=paletteTop5, rangemin=-1, rangemax=2,
+        p = createHeatmap(dfBot, palette=paletteDelta, rangemin=-1, rangemax=2,
                           title="Last 5 \n({0}, {1}-{2})".format(tbl, context['prev_period_str'], context['end_period_str']),
                           incsign=True)
         p.output_backend = "svg"
@@ -495,11 +494,11 @@ def scoreLastPeriods_type(context, db_con):
     ret_dfs = []
 
     for i, metadata in enumerate(context['type_vals']):
-        print("Score last periods for {} ({}-{})".format(metadata, context['start_period_str'], context['end_period_str']))
+        print("Score last periods for {} = {} ({}-{})".format(context['type'], metadata, context['start_period_str'], context['end_period_str']))
         df_mw = []
 
         for tbl in context['tables']:
-            query = 'SELECT max({3}) as {3},{1} from {0} where {2}>={4} and {2}<={5} and {6}=\'{7}\' group by {2} order by {2} asc'.format(
+            query = 'SELECT max({3}) as {3},{1} from {0} where {2}>={4} and {2}<={5} and md_{6}=\'{7}\' group by {2} order by {2} asc'.format(
                 tbl, qry_items_score[tbl], context['period_col'], context['period_str_col'], context['start_period'], context['end_period'],
                 context['type'], metadata)
             df_mw.append(db_con.execute(query).fetchdf())
@@ -532,10 +531,10 @@ def detailLastPeriod_type(context, db_con):
         return []
 
     for metadata in context['type_vals']:
-        print("Details last periods for {} ({})".format(metadata, context['end_period_str']))
+        print("Details last periods for {} = {} ({})".format(context['type'], metadata, context['end_period_str']))
 
         for tbl in context['tables']:
-            query = "SELECT {1} from {0} where {2}={3} and {4}='{5}' order by score desc, domain asc".format(
+            query = "SELECT {1} from {0} where {2}={3} and md_{4}='{5}' order by score desc, domain asc".format(
                     tbl, qry_items_detail[tbl], context['period_col'], context['end_period'],
                     context['type'], metadata)
             df = db_con.execute(query).fetchdf()
@@ -600,7 +599,6 @@ def get_Context(con, args):
     arr = con.execute(q_str).fetchnumpy()
     periods_present = list(arr[context['period_col']])
 
-    # TODO: Check on empty list!
     if len(periods_present) == 0:
         context['end_period'] = None
         return context
@@ -622,12 +620,14 @@ def get_Context(con, args):
     q_str = "DESCRIBE {}".format(context['tables'][0])
     arr = con.execute(q_str).fetchnumpy()
     cols = list(arr['Field'])
-    if args.m in cols:
+    if "md_{}".format(args.m) in cols:
         context['type'] = args.m
-        q_str = "select distinct({0}) as type from {1} where {0}!='<unknown>' order by {0} desc".format(
+        q_str = "select distinct(md_{0}) as type from {1} where md_{0}!='<unknown>' order by md_{0} desc".format(
             context['type'], context['tables'][0])
         arr = con.execute(q_str).fetchnumpy()
         context['type_vals'] = list(arr['type'])
+    else:
+        print("No metadata '{0}' found. Not creating graphs based on '{0}'.".format(args.m))
 
     return context
 
@@ -660,10 +660,9 @@ def main():
         print("You cannot specify a file ({}) as an output directory!".format(args.output_dir))
         exit(2)
 
-    ret_dfs = []
-    ret_dfs.extend(scoreLastPeriod_type(context, con))
-    ret_dfs.extend(scoreLastPeriods(context, con))
-    ret_dfs.extend(scoreLastPeriods_type(context, con))
+    scoreLastPeriods(context, con)
+    scoreLastPeriod_type(context, con)
+    scoreLastPeriods_type(context, con)
 
     detailLastPeriod(context, con)
     detailLastPeriod_type(context, con)

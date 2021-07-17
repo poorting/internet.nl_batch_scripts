@@ -5,6 +5,7 @@ modern and reliable Internet Standards; and if they don’t, gives suggestions o
 
 See the [internet.nl](https://internet.nl) website and/or its [source code on github](https://github.com/NLnetLabs/Internet.nl).
 
+###Table of Contents
   - [Quick introduction](#quick-introduction)
   - [Getting started](#getting-started)
     - [Get credentials](#get-credentials)
@@ -129,12 +130,15 @@ Mail and web measurements results will be stored in separate tables ('mail' and 
 
 The script will also add information on the month and quarter of the measurements (yyyyQ#, e.g. 2020Q4). Please note that a measurement done in the months 1,4,7,10 (January, April, July, October) will be marked as measurements for the *preceding* quarter. So a measurement in January 2021 will be marked as a 2020Q4 measurement. It helps to do measurements roughly on the same day of the month/quarter. If you want to do quarter measurements then do them at the start of January, April, July, and October.
 
+#### Including metadata
 Additional information from the original domain xlsx file can be included by including the domain filename and (optionally) the column(s) to include. With no column specified the default of 'type' will be used.
 To process the same results as in the example above, but now including the information from the 'type' and 'name' columns use:
 ```
 ./process.py measurements duckdb output -d domains/domains.xlsx -m type,name
 ```
+
 Please note that the column names cannot contain spaces and that multiple columns need to be separated by a comma *without spaces* as well.
+
 
 Measurement results can also be stored in an xlsx file or csv files by replacing *duckdb* in the command above with *xlsx* or *csv*.
 For xlsx the mail and web results will be put into separate sheets ('mail' and 'web'). With csv two separate output files will be produced for the mail and web results.
@@ -176,6 +180,7 @@ If fewer periods are present in the database than you specify, the maximum perio
 
 All graphs are written to disk in both *PNG* and *SVG* format. The latter is useful for presentations or printed materials since *SVG* is a scalable format, meaning you can enlarge the graphs without losing quality. *PNG* is more widely supported though, and is good enough for most cases.
 
+#### Graph types
 The graphs produced are:
 * Bar graph of overall scores for web/mail combined in one graph (example above)
 * Bar graph of overall scores for web/mail for every distinct *type* in the data (e.g. 'Uni','Research') **if** *type* data is available. 
@@ -186,7 +191,10 @@ The graphs produced are:
 * Bottom 5 'improvers', for both web and mail
 * Top 0 (==all) 'improvers' overall, for both web and mail
 
-Graphs taking *type* into account are of course only made if such data is available in the database. That is: you added it in the process step as shown above. Below an example of the bar graph of only the latest scores for web/mail for every distinct type in the data (in this example 'type 0' to 'type 5') 
+Graphs taking *type* into account are of course only made if such data is available in the database. That is: you added it in the process step as shown above. 
+
+By default, *graphs.py* will check if a 'type' column/field is available and render graphs for all the distinct values present in that column. If you added other metadata columns than 'type' and want to use that for creating different graphs you can specify the name of the column to use with the -m parameter. 
+Below an example of the bar graph of only the latest scores for web/mail for every distinct type in the data (in this example 'type 0' to 'type 5') 
 
 ![Example graph](https://raw.githubusercontent.com/poorting/internet.nl_batch_scripts/master/graphs/Scores-overall-per-type.png)
 
