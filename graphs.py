@@ -13,6 +13,10 @@ import pprint
 import math
 import duckdb
 
+import matplotlib.pyplot as plt
+from matplotlib.font_manager import FontProperties
+import seaborn as sns
+
 from bokeh.io import show, output_file, export_svgs, export_png
 from bokeh.models import ColumnDataSource, FactorRange, ranges, LabelSet, LinearColorMapper
 from bokeh.plotting import figure
@@ -390,6 +394,85 @@ def scoreLastPeriod_type(context, db_con):
 
 
 # ------------------------------------------------------------------------------
+def spiderLastPeriod_type(context, db_con):
+
+    pp = pprint.PrettyPrinter(indent=4)
+
+    if not context['type']:
+        return []
+
+    ret_dfs = []
+
+    print("Spider plot period per value of {} ({})".format(context['type'], context['end_period_str']))
+
+    df_mw = []
+
+    for tbl in context['tables']:
+        query = "SELECT max(md_{4}) as '{4}', {1} from {0} where {2}=={3} and md_{4}!='<unknown>' group by md_{4} order by md_{4} desc".format(
+            tbl, qry_items_score[tbl], context['period_col'], context['end_period'], context['type'])
+        df_mw.append(db_con.execute(query).fetchdf())
+
+    df = df_mw[0]
+    if len(df_mw)>1:
+        df_mw[1].drop(context['type'], axis=1, inplace=True)
+        df = pd.concat(df_mw, axis=1)
+        df.drop('score(web)', axis=1, inplace=True)
+        df.drop('score(mail)', axis=1, inplace=True)
+
+
+    categories = list(df.columns)[1:]
+    N = len(categories)
+
+    # What will be the angle of each axis in the plot? (we divide the plot / number of variable)
+    angles = [n / float(N) * 2 * math.pi for n in range(N)]
+    angles += angles[:1]
+
+    # Initialise the spider plot
+    # ax = plt.subplot(111, polar=True)
+    ax = plt.subplot(polar=True)
+    plt.title("Results per {} ({})".format(context['type'], context['end_period_str']))
+    # If you want the first axis to be on top:
+    ax.set_theta_offset(math.pi / 2)
+    ax.set_theta_direction(-1)
+
+    # Draw one axe per variable + add labels
+    plt.xticks(angles[:-1], categories)
+
+    ticks = [i for i in range(10, 110, 10)]
+    tick_labels = ["{}".format(i) for i in range(10, 110, 10)]
+
+    # Draw ylabels
+    ax.set_rlabel_position(0)
+    # plt.yticks([20, 40, 60, 80, 100], ["20", "40", "60", "80", "100"], color="grey", size=7)
+    plt.yticks(ticks, tick_labels, color="grey", size=7)
+    plt.ylim(0, 100)
+
+    # ------- PART 2: Add plots
+
+    # Plot each individual = each line of the data
+    # I don't make a loop, because plotting more than 3 groups makes the chart unreadable
+
+    md_types = list(df[context['type']])
+    for i, md_type in enumerate(md_types):
+        values = df.iloc[i].drop(context['type']).values.flatten().tolist()
+        values += values[:1]
+        ax.plot(angles, values, linewidth=2, linestyle='solid', label=md_type)
+        # ax.fill(angles, values, 'b', alpha=0.1)
+
+    # Add legend
+    fontP = FontProperties()
+    fontP.set_size('x-small')
+    plt.legend(title=context['type'], bbox_to_anchor=(1.05, 1), loc='upper left', prop=fontP)
+    # Show the graph
+    # plt.show()
+    filename = "{}/Spiderplot-{}".format(context['output_dir'], context['type'])
+    plt.savefig(filename + '.svg')
+    plt.savefig(filename + '.png')
+    # plt.clf()
+    plt.close()
+
+
+# ------------------------------------------------------------------------------
 def detailLastPeriod(context, db_con):
 
     pp = pprint.PrettyPrinter(indent=4)
@@ -411,6 +494,58 @@ def detailLastPeriod(context, db_con):
         p.output_backend = "svg"
         export_svgs(p, filename=filename + '.svg')
         export_png(p, filename=filename + '.png')
+
+
+# ------------------------------------------------------------------------------
+def detailLastPeriod_seaborn(context, db_con):
+
+    pp = pprint.PrettyPrinter(indent=4)
+
+    ret_dfs = []
+
+    print("Details last periods overall ({})".format(context['end_period_str']))
+
+    df_mw = []
+
+    for tbl in context['tables']:
+        query = "SELECT {1} from {0} where {2}={3} order by score desc, domain asc".format(
+                tbl, qry_items_detail[tbl], context['period_col'], context['end_period'])
+        df = db_con.execute(query).fetchdf()
+
+        pp.pprint(df)
+        domains = list(df.iloc[:, 0])
+
+        row = 0
+        incsign = False
+        for domain in domains:
+            score = df.iat[row, 1]
+            lb = '('
+            if incsign:
+                if (score > 0):
+                    lb = '(+'
+
+            df.iat[row, 0] = '{0} {1}{2})'.format(domain, lb, score)
+            row = row + 1
+        df.drop('score', axis=1, inplace=True)
+
+        # Heatmap nu heeft domain als index (verticaal op heatmap)
+        # De kolommen geven de categoriën
+
+        df = df.set_index('domain')
+        df.columns.name = 'category'
+        pp.pprint(df)
+
+        # plot a heatmap with custom grid lines
+        sns.heatmap(df, linewidths=2, linecolor='white')
+
+        plt.show()
+
+        # title = 'Details {} ({})'.format(tbl, context['end_period_str'])
+        # filename = "{}/Details-overall-{}".format(context['output_dir'], tbl)
+        # p = createHeatmap(df, title=title)
+        # p.output_backend = "svg"
+        # export_svgs(p, filename=filename + '.svg')
+        # export_png(p, filename=filename + '.png')
 
 
 # ------------------------------------------------------------------------------
@@ -662,6 +797,7 @@ def main():
 
     scoreLastPeriods(context, con)
     scoreLastPeriod_type(context, con)
+    spiderLastPeriod_type(context, con)
     scoreLastPeriods_type(context, con)
 
     detailLastPeriod(context, con)
