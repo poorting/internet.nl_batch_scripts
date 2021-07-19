@@ -77,7 +77,7 @@ def parser_add_arguments():
         formatter_class=argparse.RawTextHelpFormatter, )
 
     # usage: process-results.py [-h] [-d FILE] [-m col[,col1,...]] [-s [sheet_name]] [-r] [-v] [--debug] [-V] {json file|json dir} {csv|xlsx|duckdb} outputfile
-    parser.usage = "process-results.py {json file|json dir} {csv|xlsx|duckdb} outputfile [-d FILE] [-m col[,col1,...]] [-r]"
+    parser.usage = "process.py {json file|json dir} {csv|xlsx|duckdb} outputfile [-d FILE] [-m col[,col1,...]] [-r]"
 
     parser.add_argument("filename",
                         metavar='{json file|json dir}',

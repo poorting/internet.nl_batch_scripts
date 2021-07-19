@@ -409,12 +409,12 @@ def _JSONtoCSV1_1(data, domains_metadata, columns_to_add):
                 for md in columns_to_add:
                     # check if metadata column exists first
                     if md in domains_metadata.columns:
-                        line.append({'{}'.format(md): domains_metadata.at[domainname, md]})
+                        line.append({'md_{}'.format(md): domains_metadata.at[domainname, md]})
                     else:
-                        line.append({'{}'.format(md): TYPE_UNKNOWN})
+                        line.append({'md_{}'.format(md): TYPE_UNKNOWN})
             else:
                 for md in columns_to_add:
-                    line.append({'{}'.format(md): TYPE_UNKNOWN})
+                    line.append({'md_{}'.format(md): TYPE_UNKNOWN})
 
         if 'status' in domainresults:
             line.append({'status': domainresults['status']})
@@ -519,12 +519,12 @@ def _JSONtoCSV2_0(data, domains_metadata, columns_to_add):
                 for md in columns_to_add:
                     # check if metadata column exists first
                     if md in domains_metadata.columns:
-                        line.append({'{}'.format(md): domains_metadata.at[domainname, md]})
+                        line.append({'md_{}'.format(md): domains_metadata.at[domainname, md]})
                     else:
-                        line.append({'{}'.format(md): TYPE_UNKNOWN})
+                        line.append({'md_{}'.format(md): TYPE_UNKNOWN})
             else:
                 for md in columns_to_add:
-                    line.append({'{}'.format(md): TYPE_UNKNOWN})
+                    line.append({'md_{}'.format(md): TYPE_UNKNOWN})
 
         if 'status' in domainresults:
             line.append({'status': domainresults['status']})
@@ -643,12 +643,12 @@ def _JSONtoCSVall1_1(data, domains_metadata, columns_to_add):
                 for md in columns_to_add:
                     # check if metadata column exists first
                     if md in domains_metadata.columns:
-                        line.append({'{}'.format(md): domains_metadata.at[domainname, md]})
+                        line.append({'md_{}'.format(md): domains_metadata.at[domainname, md]})
                     else:
-                        line.append({'{}'.format(md): TYPE_UNKNOWN})
+                        line.append({'md_{}'.format(md): TYPE_UNKNOWN})
             else:
                 for md in columns_to_add:
-                    line.append({'{}'.format(md): TYPE_UNKNOWN})
+                    line.append({'md_{}'.format(md): TYPE_UNKNOWN})
 
         if 'status' in domainresults:
             line.append({'status': domainresults['status']})
@@ -738,12 +738,12 @@ def _JSONtoCSVall2_0(data, domains_metadata, columns_to_add):
                 for md in columns_to_add:
                     # check if metadata column exists first
                     if md in domains_metadata.columns:
-                        line.append({'{}'.format(md): domains_metadata.at[domainname, md]})
+                        line.append({'md_{}'.format(md): domains_metadata.at[domainname, md]})
                     else:
-                        line.append({'{}'.format(md): TYPE_UNKNOWN})
+                        line.append({'md_{}'.format(md): TYPE_UNKNOWN})
             else:
                 for md in columns_to_add:
-                    line.append({'{}'.format(md): TYPE_UNKNOWN})
+                    line.append({'md_{}'.format(md): TYPE_UNKNOWN})
 
         if 'status' in domainresults:
             line.append({'status': domainresults['status']})

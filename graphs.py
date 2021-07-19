@@ -15,7 +15,6 @@ import duckdb
 
 import matplotlib.pyplot as plt
 from matplotlib.font_manager import FontProperties
-import seaborn as sns
 
 from bokeh.io import show, output_file, export_svgs, export_png
 from bokeh.models import ColumnDataSource, FactorRange, ranges, LabelSet, LinearColorMapper
