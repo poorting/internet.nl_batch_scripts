@@ -13,8 +13,10 @@ import pprint
 import math
 import duckdb
 
+import seaborn as sns
 import matplotlib.pyplot as plt
 from matplotlib.font_manager import FontProperties
+from matplotlib.colors import LinearSegmentedColormap
 
 from bokeh.io import show, output_file, export_svgs, export_png
 from bokeh.models import ColumnDataSource, FactorRange, ranges, LabelSet, LinearColorMapper
@@ -259,7 +261,61 @@ def createBarGraph(df, title=' ', y_label='score/percentage', label_suffix='', p
 
 
 # ------------------------------------------------------------------------------
-def createHeatmap(df, title=' ', rangemin=0, rangemax=1, palette=paletteHeatmap, incsign=False):
+# def createHeatmap(df, title=' ', rangemin=0, rangemax=1, palette=paletteHeatmap, incsign=False):
+#     # Creeer een 'heat map' voor de individuele scores van de instellingen/domeinen
+#     pp = pprint.PrettyPrinter(indent=4)
+#
+#     # De score tabel wordt achter het domein gevoegd (bv 'www.surf.nl (97)'), zodat de inhoud zelf alleen 0/1 (rood/groen) is.
+#     domains = list(df.iloc[:, 0])
+#
+#     row = 0
+#     for domain in domains:
+#         score = df.iat[row, 1]
+#         lb = '('
+#         if incsign:
+#             if (score > 0):
+#                 lb = '(+'
+#
+#         df.iat[row, 0] = '{0} {1}{2})'.format(domain, lb, score)
+#         row = row + 1
+#     df.drop('score', axis=1, inplace=True)
+#
+#     # Heatmap nu heeft domain als index (verticaal op heatmap)
+#     # De kolommen geven de categoriën
+#
+#     df = df.set_index('domain')
+#     df.columns.name = 'category'
+#
+#     # reshape to 1D array of 'passed' with a domain and category for each row.
+#     df1 = pd.DataFrame(df.stack(), columns=['passed']).reset_index()
+#     source = ColumnDataSource(df1)
+#
+#     mapper = LinearColorMapper(palette=palette, low=rangemin, high=rangemax)
+#
+#     lentxt = len(max(list(df.index), key=len))
+#     lencats = len(df.columns)
+#     width = 8 * lentxt + 25 * lencats + 20
+#     p = figure(title=title, x_range=list(df.columns), y_range=list(reversed(df.index)), x_axis_location="above",
+#                plot_width=width, plot_height=25 * len(df.index) + 150, tools="")
+#
+#     p.rect(x='category', y='domain', width=1, height=1, source=source, line_color='#ffffff',
+#            fill_color=transform('passed', mapper))
+#
+#     p.title.align = 'right'
+#     p.title.text_font_size = "10pt"
+#     p.title.text_font_style = "bold"
+#
+#     p.axis.axis_line_color = None
+#     p.axis.major_tick_line_color = None
+#     p.axis.major_label_text_font_size = "10pt"
+#     p.axis.major_label_standoff = 0
+#     p.xaxis.major_label_orientation = 'vertical'
+#
+#     return p
+#
+#
+# ------------------------------------------------------------------------------
+def createHeatmap(df, title='',incsign=False):
     # Creeer een 'heat map' voor de individuele scores van de instellingen/domeinen
     pp = pprint.PrettyPrinter(indent=4)
 
@@ -288,28 +344,30 @@ def createHeatmap(df, title=' ', rangemin=0, rangemax=1, palette=paletteHeatmap,
     df1 = pd.DataFrame(df.stack(), columns=['passed']).reset_index()
     source = ColumnDataSource(df1)
 
-    mapper = LinearColorMapper(palette=palette, low=rangemin, high=rangemax)
+    myColors = ((1.0, 0.0, 0.0, 1.0), (0.75, 0.0, 0.0, 1.0), (0.0, 0.65, 0.0, 1.0), (0.0, 1.0, 0.0, 1.0))
+    my_cmap = LinearSegmentedColormap.from_list('Custom', myColors, len(myColors))
 
-    lentxt = len(max(list(df.index), key=len))
-    lencats = len(df.columns)
-    width = 8 * lentxt + 25 * lencats + 20
-    p = figure(title=title, x_range=list(df.columns), y_range=list(reversed(df.index)), x_axis_location="above",
-               plot_width=width, plot_height=25 * len(df.index) + 150, tools="")
+    plt.figure(figsize=(7, int(len(df) / 2.5)+1.5))
+    plt.title(title)
 
-    p.rect(x='category', y='domain', width=1, height=1, source=source, line_color='#ffffff',
-           fill_color=transform('passed', mapper))
+    # plot a heatmap with custom grid lines
+    ax = sns.heatmap(df,
+                     linewidths=0.5,
+                     linecolor='white',
+                     square=True,
+                     cbar=False,
+                     annot=False,
+                     cmap=my_cmap,
+                     # cmap='RdYlGn',
+                     vmin=-1, vmax=2)
+    ax.set_xticklabels(ax.get_xticklabels(), rotation=90)
+    ax.xaxis.set_ticks_position('top')
+    ax.set_ylabel('')
+    ax.set_xlabel('')
+    ax.set_aspect('equal')
+    plt.tight_layout()
 
-    p.title.align = 'right'
-    p.title.text_font_size = "10pt"
-    p.title.text_font_style = "bold"
-
-    p.axis.axis_line_color = None
-    p.axis.major_tick_line_color = None
-    p.axis.major_label_text_font_size = "10pt"
-    p.axis.major_label_standoff = 0
-    p.xaxis.major_label_orientation = 'vertical'
-
-    return p
+    return ax
 
 
 # ------------------------------------------------------------------------------
@@ -472,6 +530,30 @@ def spiderLastPeriod_type(context, db_con):
 
 
 # ------------------------------------------------------------------------------
+# def detailLastPeriod(context, db_con):
+#
+#     pp = pprint.PrettyPrinter(indent=4)
+#
+#     ret_dfs = []
+#
+#     print("Details last periods overall ({})".format(context['end_period_str']))
+#
+#     df_mw = []
+#
+#     for tbl in context['tables']:
+#         query = "SELECT {1} from {0} where {2}={3} order by score desc, domain asc".format(
+#                 tbl, qry_items_detail[tbl], context['period_col'], context['end_period'])
+#         df = db_con.execute(query).fetchdf()
+#
+#         title = 'Details {} ({})'.format(tbl, context['end_period_str'])
+#         filename = "{}/Details-overall-{}".format(context['output_dir'], tbl)
+#         p = createHeatmap(df, title=title)
+#         p.output_backend = "svg"
+#         export_svgs(p, filename=filename + '.svg')
+#         export_png(p, filename=filename + '.png')
+#
+
+# ------------------------------------------------------------------------------
 def detailLastPeriod(context, db_con):
 
     pp = pprint.PrettyPrinter(indent=4)
@@ -489,64 +571,83 @@ def detailLastPeriod(context, db_con):
 
         title = 'Details {} ({})'.format(tbl, context['end_period_str'])
         filename = "{}/Details-overall-{}".format(context['output_dir'], tbl)
+
         p = createHeatmap(df, title=title)
-        p.output_backend = "svg"
-        export_svgs(p, filename=filename + '.svg')
-        export_png(p, filename=filename + '.png')
+
+        plt.savefig(filename + '.png', bbox_inches='tight')
+        plt.savefig(filename + '.svg', bbox_inches='tight')
 
 
 # ------------------------------------------------------------------------------
-def detailLastPeriod_seaborn(context, db_con):
-
-    pp = pprint.PrettyPrinter(indent=4)
-
-    ret_dfs = []
-
-    print("Details last periods overall ({})".format(context['end_period_str']))
-
-    df_mw = []
-
-    for tbl in context['tables']:
-        query = "SELECT {1} from {0} where {2}={3} order by score desc, domain asc".format(
-                tbl, qry_items_detail[tbl], context['period_col'], context['end_period'])
-        df = db_con.execute(query).fetchdf()
-
-        pp.pprint(df)
-        domains = list(df.iloc[:, 0])
-
-        row = 0
-        incsign = False
-        for domain in domains:
-            score = df.iat[row, 1]
-            lb = '('
-            if incsign:
-                if (score > 0):
-                    lb = '(+'
-
-            df.iat[row, 0] = '{0} {1}{2})'.format(domain, lb, score)
-            row = row + 1
-        df.drop('score', axis=1, inplace=True)
-
-        # Heatmap nu heeft domain als index (verticaal op heatmap)
-        # De kolommen geven de categoriën
-
-        df = df.set_index('domain')
-        df.columns.name = 'category'
-        pp.pprint(df)
-
-        # plot a heatmap with custom grid lines
-        sns.heatmap(df, linewidths=2, linecolor='white')
-
-        plt.show()
-
-        # title = 'Details {} ({})'.format(tbl, context['end_period_str'])
-        # filename = "{}/Details-overall-{}".format(context['output_dir'], tbl)
-        # p = createHeatmap(df, title=title)
-        # p.output_backend = "svg"
-        # export_svgs(p, filename=filename + '.svg')
-        # export_png(p, filename=filename + '.png')
-
-
+# def deltaToPrevious(context, db_con):
+#
+#     pp = pprint.PrettyPrinter(indent=4)
+#
+#     ret_dfs = []
+#
+#     print("Delta compared to previous period ({}-{})".format(context['prev_period_str'], context['end_period_str']))
+#
+#     df_mw = []
+#
+#     for tbl in context['tables']:
+#         query = "SELECT {1} from {0} where {2}={3} order by domain asc".format(
+#                 tbl, qry_items_detail[tbl], context['period_col'], context['prev_period'])
+#         df1 = db_con.execute(query).fetchdf()
+#
+#         query = "SELECT {1} from {0} where {2}={3} order by domain asc".format(
+#                 tbl, qry_items_detail[tbl], context['period_col'], context['end_period'])
+#         df2 = db_con.execute(query).fetchdf()
+#
+#         # Multiply everything but the score by 2 for the last one
+#         # Then deduct the first one from the second
+#         # This will give possible 'passed' values of:
+#         # 0->false, 1->was True and is True, 2-> was False but now True
+#         # for this to work we have to set the domain as index
+#         # (so they will be ignored for the subtraction)
+#         df1 = df1.set_index('domain')
+#         df2 = df2.set_index('domain')
+#         df2 = df2 * 2
+#         df2.score = round(df2.score / 2)
+#         df2 = df2.astype({"score": int})
+#         df = df2.subtract(df1)
+#         df['score'].fillna(0, inplace=True)
+#         df = df.astype({"score": int})
+#
+#         # Now sort by score (descending), then domain (ascending)
+#         df.sort_values(by=['score', 'domain'], ascending=[False, True], inplace=True)
+#         # pp.pprint(df.head(5))
+#         # pp.pprint(df.tail(5))
+#
+#         # Make domains a column again (otherwise Heatmap will fail)
+#         df.reset_index(level=0, inplace=True)
+#         dfTop = df.head(5).copy()
+#         dfBot = df.tail(5).copy()
+#
+#         print("\tDelta for all ({}, {}-{})".format(tbl, context['prev_period_str'], context['end_period_str']))
+#         p = createHeatmap(df, palette=paletteDelta, rangemin=-1, rangemax=2,
+#                           title='Delta ({0}, {1}-{2})'.format(tbl, context['prev_period_str'], context['end_period_str']),
+#                           incsign=True)
+#         p.output_backend = "svg"
+#         export_svgs(p, filename='{}/Delta-all-{}.svg'.format(context['output_dir'], tbl))
+#         export_png(p, filename='{}/Delta-all-{}.png'.format(context['output_dir'], tbl))
+#
+#         print("\tTop 5 ({}, {}-{})".format(tbl, context['prev_period_str'], context['end_period_str']))
+#         p = createHeatmap(dfTop, palette=paletteDelta, rangemin=-1, rangemax=2,
+#                           title="Top 5 ({0}, {1}-{2})".format(tbl, context['prev_period_str'], context['end_period_str']),
+#                           incsign=True)
+#         p.output_backend = "svg"
+#         export_svgs(p, filename='{}/Delta-top-5-{}.svg'.format(context['output_dir'], tbl))
+#         export_png(p, filename='{}/Delta-top-5-{}.png'.format(context['output_dir'], tbl))
+#
+#         print("\tBottom 5 ({}, {}-{})".format(tbl, context['prev_period_str'], context['end_period_str']))
+#         p = createHeatmap(dfBot, palette=paletteDelta, rangemin=-1, rangemax=2,
+#                           title="Last 5 ({0}, {1}-{2})".format(tbl, context['prev_period_str'], context['end_period_str']),
+#                           incsign=True)
+#         p.output_backend = "svg"
+#         export_svgs(p, filename='{}/Delta-bottom-5-{}.svg'.format(context['output_dir'], tbl))
+#         export_png(p, filename='{}/Delta-bottom-5-{}.png'.format(context['output_dir'], tbl))
+#
+#
 # ------------------------------------------------------------------------------
 def deltaToPrevious(context, db_con):
 
@@ -593,28 +694,28 @@ def deltaToPrevious(context, db_con):
         dfBot = df.tail(5).copy()
 
         print("\tDelta for all ({}, {}-{})".format(tbl, context['prev_period_str'], context['end_period_str']))
-        p = createHeatmap(df, palette=paletteDelta, rangemin=-1, rangemax=2,
-                          title='Delta ({0}, {1}-{2})'.format(tbl, context['prev_period_str'], context['end_period_str']),
-                          incsign=True)
-        p.output_backend = "svg"
-        export_svgs(p, filename='{}/Delta-all-{}.svg'.format(context['output_dir'], tbl))
-        export_png(p, filename='{}/Delta-all-{}.png'.format(context['output_dir'], tbl))
+        p = createHeatmap(
+            df,
+            title='Delta ({0}, {1}-{2})'.format(tbl, context['prev_period_str'], context['end_period_str']))
+        plt.savefig('{}/Delta-all-{}.png'.format(context['output_dir'], tbl), bbox_inches='tight')
+        plt.savefig('{}/Delta-all-{}.svg'.format(context['output_dir'], tbl), bbox_inches='tight')
 
         print("\tTop 5 ({}, {}-{})".format(tbl, context['prev_period_str'], context['end_period_str']))
-        p = createHeatmap(dfTop, palette=paletteDelta, rangemin=-1, rangemax=2,
-                          title="Top 5 \n({0}, {1}-{2})".format(tbl, context['prev_period_str'], context['end_period_str']),
-                          incsign=True)
-        p.output_backend = "svg"
-        export_svgs(p, filename='{}/Delta-top-5-{}.svg'.format(context['output_dir'], tbl))
-        export_png(p, filename='{}/Delta-top-5-{}.png'.format(context['output_dir'], tbl))
+        p = createHeatmap(
+            dfTop,
+            title="Top 5 ({0}, {1}-{2})".format(tbl, context['prev_period_str'], context['end_period_str']),
+            incsign=True)
+        plt.savefig('{}/Delta-top-5-{}.png'.format(context['output_dir'], tbl), bbox_inches='tight')
+        plt.savefig('{}/Delta-top-5-{}.svg'.format(context['output_dir'], tbl), bbox_inches='tight')
+
 
         print("\tBottom 5 ({}, {}-{})".format(tbl, context['prev_period_str'], context['end_period_str']))
-        p = createHeatmap(dfBot, palette=paletteDelta, rangemin=-1, rangemax=2,
-                          title="Last 5 \n({0}, {1}-{2})".format(tbl, context['prev_period_str'], context['end_period_str']),
-                          incsign=True)
-        p.output_backend = "svg"
-        export_svgs(p, filename='{}/Delta-bottom-5-{}.svg'.format(context['output_dir'], tbl))
-        export_png(p, filename='{}/Delta-bottom-5-{}.png'.format(context['output_dir'], tbl))
+        p = createHeatmap(
+            dfBot,
+            title="Bottom 5 ({0}, {1}-{2})".format(tbl, context['prev_period_str'], context['end_period_str']),
+            incsign=True)
+        plt.savefig('{}/Delta-bottom-5-{}.png'.format(context['output_dir'], tbl), bbox_inches='tight')
+        plt.savefig('{}/Delta-bottom-5-{}.svg'.format(context['output_dir'], tbl), bbox_inches='tight')
 
 
 # ------------------------------------------------------------------------------
@@ -657,6 +758,33 @@ def scoreLastPeriods_type(context, db_con):
 
 
 # ------------------------------------------------------------------------------
+# def detailLastPeriod_type(context, db_con):
+#
+#     pp = pprint.PrettyPrinter(indent=4)
+#
+#     if not context['type']:
+#         return []
+#
+#     for metadata in context['type_vals']:
+#         print("Details last periods for {} = {} ({})".format(context['type'], metadata, context['end_period_str']))
+#
+#         for tbl in context['tables']:
+#             query = "SELECT {1} from {0} where {2}={3} and md_{4}='{5}' order by score desc, domain asc".format(
+#                     tbl, qry_items_detail[tbl], context['period_col'], context['end_period'],
+#                     context['type'], metadata)
+#             df = db_con.execute(query).fetchdf()
+#
+#             title = 'Details {} ({}, {})'.format(tbl, metadata, context['end_period_str'])
+#             filename = "{}/Details-{}-{}".format(context['output_dir'], metadata, tbl)
+#             p = createHeatmap(df, title=title)
+#             p.output_backend = "svg"
+#             export_svgs(p, filename=filename + '.svg')
+#             export_png(p, filename=filename + '.png')
+#
+#             # df_mw.append(db_con.execute(query).fetchdf())
+#
+#
+# ------------------------------------------------------------------------------
 def detailLastPeriod_type(context, db_con):
 
     pp = pprint.PrettyPrinter(indent=4)
@@ -676,11 +804,9 @@ def detailLastPeriod_type(context, db_con):
             title = 'Details {} ({}, {})'.format(tbl, metadata, context['end_period_str'])
             filename = "{}/Details-{}-{}".format(context['output_dir'], metadata, tbl)
             p = createHeatmap(df, title=title)
-            p.output_backend = "svg"
-            export_svgs(p, filename=filename + '.svg')
-            export_png(p, filename=filename + '.png')
 
-            # df_mw.append(db_con.execute(query).fetchdf())
+            plt.savefig(filename+'.png', bbox_inches='tight')
+            plt.savefig(filename+'.svg', bbox_inches='tight')
 
 
 # ------------------------------------------------------------------------------
@@ -800,17 +926,15 @@ def main():
     scoreLastPeriods_type(context, con)
 
     detailLastPeriod(context, con)
+    # detailLastPeriod_seaborn(context, con)
     detailLastPeriod_type(context, con)
+    # detailLastPeriod_type_seaborn(context, con)
 
     if context['prev_period']:
         deltaToPrevious(context, con)
+        # deltaToPrevious_seaborn(context, con)
 
     con.close()
-
-    # for df_lst in ret_dfs:
-    #     pp.pprint(df_lst['name'])
-    #     pp.pprint(df_lst['df'])
-    #     print()
 
 
 if __name__ == '__main__':
