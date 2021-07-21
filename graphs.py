@@ -751,13 +751,10 @@ def main():
     scoreLastPeriods_type(context, con)
 
     detailLastPeriod(context, con)
-    # detailLastPeriod_seaborn(context, con)
     detailLastPeriod_type(context, con)
-    # detailLastPeriod_type_seaborn(context, con)
 
     if context['prev_period']:
         deltaToPrevious(context, con)
-        # deltaToPrevious_seaborn(context, con)
 
     con.close()
 
