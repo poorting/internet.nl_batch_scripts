@@ -317,6 +317,51 @@ def createHeatmap(df, title='',incsign=False):
 
 
 # ------------------------------------------------------------------------------
+def createSpiderPlot(df, type_col, title=''):
+
+    categories = list(df.columns)[1:]
+    N = len(categories)
+
+    # What will be the angle of each axis in the plot? (we divide the plot / number of variable)
+    angles = [n / float(N) * 2 * math.pi for n in range(N)]
+    angles += angles[:1]
+
+    # Initialise the spider plot
+    plt.figure(figsize=(7, 7))
+    ax = plt.subplot(polar=True)
+    plt.title(title)
+    # If you want the first axis to be on top:
+    ax.set_theta_offset(math.pi / 2)
+    ax.set_theta_direction(-1)
+
+    # Draw one axe per variable + add labels
+    plt.xticks(angles[:-1], categories)
+
+    # Draw ylabels
+    ticks = [i for i in range(10, 110, 10)]
+    tick_labels = ["{}".format(i) for i in range(10, 110, 10)]
+    ax.set_rlabel_position(0)
+    plt.yticks(ticks, tick_labels, color="grey", size=7)
+    plt.ylim(0, 100)
+
+    md_types = list(df[type_col])
+    for i, md_type in enumerate(md_types):
+        values = df.iloc[i].drop(type_col).values.flatten().tolist()
+        values += values[:1]
+        ax.plot(angles, values, linewidth=1, linestyle='solid', label=md_type)
+        # ax.fill(angles, values, 'b', alpha=0.1)
+
+    # Add legend
+    fontP = FontProperties()
+    fontP.set_size('x-small')
+    leg = plt.legend(title=type_col, bbox_to_anchor=(1.1, 1.0), prop=fontP)
+    for line in leg.get_lines():
+        line.set_linewidth(2)
+
+    return ax
+
+
+# ------------------------------------------------------------------------------
 def getSectorPalette(types):
     sectors = {}
     for i in range(len(types)):
@@ -369,8 +414,6 @@ def scoreLastPeriod_type(context, db_con):
     if not context['type']:
         return []
 
-    ret_dfs = []
-
     print("Score last period per value of {} ({})".format(context['type'], context['end_period_str']))
 
     df_mw = []
@@ -385,93 +428,27 @@ def scoreLastPeriod_type(context, db_con):
         df_mw[1].drop(context['type'], axis=1, inplace=True)
         df = pd.concat(df_mw, axis=1)
 
-    title = 'Results per value of {} ({})'.format(context['type'], context['end_period_str'])
+    print("\tCreating bar graph")
+    title = 'Results per {} ({})'.format(context['type'], context['end_period_str'])
     filename = "{}/Scores-overall-per-{}".format(context['output_dir'], context['type'])
     p = createBarGraph(df, title=title, palette=paletteSector)
     p.output_backend = "svg"
     export_svgs(p, filename=filename + ".svg")
     export_png(p, filename=filename + ".png")
 
-    ret_dfs.append({'name': 'Scores-overall-per-{}'.format(context['type']), 'df': df})
-    return ret_dfs
+    # SPIDER PLOT
+    print("\tCreating spider plot")
+    # if 'score(web)' in df.columns:
+    #     df.drop('score(web)', axis=1, inplace=True)
+    # if 'score(mail)' in df.columns:
+    #     df.drop('score(mail)', axis=1, inplace=True)
+    title = "Results per {} ({})".format(context['type'], context['end_period_str'])
 
+    createSpiderPlot(df, context['type'], title=title)
 
-# ------------------------------------------------------------------------------
-def spiderLastPeriod_type(context, db_con):
-
-    pp = pprint.PrettyPrinter(indent=4)
-
-    if not context['type']:
-        return []
-
-    ret_dfs = []
-
-    print("Spider plot period per value of {} ({})".format(context['type'], context['end_period_str']))
-
-    df_mw = []
-
-    for tbl in context['tables']:
-        query = "SELECT max(md_{4}) as '{4}', {1} from {0} where {2}=={3} and md_{4}!='<unknown>' group by md_{4} order by md_{4} desc".format(
-            tbl, qry_items_score[tbl], context['period_col'], context['end_period'], context['type'])
-        df_mw.append(db_con.execute(query).fetchdf())
-
-    df = df_mw[0]
-    if len(df_mw)>1:
-        df_mw[1].drop(context['type'], axis=1, inplace=True)
-        df = pd.concat(df_mw, axis=1)
-        df.drop('score(web)', axis=1, inplace=True)
-        df.drop('score(mail)', axis=1, inplace=True)
-
-
-    categories = list(df.columns)[1:]
-    N = len(categories)
-
-    # What will be the angle of each axis in the plot? (we divide the plot / number of variable)
-    angles = [n / float(N) * 2 * math.pi for n in range(N)]
-    angles += angles[:1]
-
-    # Initialise the spider plot
-    # ax = plt.subplot(111, polar=True)
-    ax = plt.subplot(polar=True)
-    plt.title("Results per {} ({})".format(context['type'], context['end_period_str']))
-    # If you want the first axis to be on top:
-    ax.set_theta_offset(math.pi / 2)
-    ax.set_theta_direction(-1)
-
-    # Draw one axe per variable + add labels
-    plt.xticks(angles[:-1], categories)
-
-    ticks = [i for i in range(10, 110, 10)]
-    tick_labels = ["{}".format(i) for i in range(10, 110, 10)]
-
-    # Draw ylabels
-    ax.set_rlabel_position(0)
-    # plt.yticks([20, 40, 60, 80, 100], ["20", "40", "60", "80", "100"], color="grey", size=7)
-    plt.yticks(ticks, tick_labels, color="grey", size=7)
-    plt.ylim(0, 100)
-
-    # ------- PART 2: Add plots
-
-    # Plot each individual = each line of the data
-    # I don't make a loop, because plotting more than 3 groups makes the chart unreadable
-
-    md_types = list(df[context['type']])
-    for i, md_type in enumerate(md_types):
-        values = df.iloc[i].drop(context['type']).values.flatten().tolist()
-        values += values[:1]
-        ax.plot(angles, values, linewidth=2, linestyle='solid', label=md_type)
-        # ax.fill(angles, values, 'b', alpha=0.1)
-
-    # Add legend
-    fontP = FontProperties()
-    fontP.set_size('x-small')
-    plt.legend(title=context['type'], bbox_to_anchor=(1.05, 1), loc='upper left', prop=fontP)
-    # Show the graph
-    # plt.show()
     filename = "{}/Spiderplot-{}".format(context['output_dir'], context['type'])
-    plt.savefig(filename + '.svg')
-    plt.savefig(filename + '.png')
-    # plt.clf()
+    plt.savefig(filename + '.svg', bbox_inches='tight')
+    plt.savefig(filename + '.png', bbox_inches='tight')
     plt.close()
 
 
@@ -520,10 +497,16 @@ def deltaToPrevious(context, db_con):
                 tbl, qry_items_detail[tbl], context['period_col'], context['end_period'])
         df2 = db_con.execute(query).fetchdf()
 
-        # Multiply everything but the score by 2 for the last one
-        # Then deduct the first one from the second
+        # Multiply everything but the score by 2 for the latest one
+        # Then deduct the previous one from that
         # This will give possible 'passed' values of:
-        # 0->false, 1->was True and is True, 2-> was False but now True
+        #
+        #  prev latest*2    l*2-p   Meaning
+        #   1      0         -1     Worse than previous
+        #   0      0          0     Same as previous (0)
+        #   1      1          1     Same as previous (1)
+        #   0      1          2     Better than previous
+        #
         # for this to work we have to set the domain as index
         # (so they will be ignored for the subtraction)
         df1 = df1.set_index('domain')
@@ -537,8 +520,6 @@ def deltaToPrevious(context, db_con):
 
         # Now sort by score (descending), then domain (ascending)
         df.sort_values(by=['score', 'domain'], ascending=[False, True], inplace=True)
-        # pp.pprint(df.head(5))
-        # pp.pprint(df.tail(5))
 
         # Make domains a column again (otherwise Heatmap will fail)
         df.reset_index(level=0, inplace=True)
@@ -559,7 +540,6 @@ def deltaToPrevious(context, db_con):
             incsign=True)
         plt.savefig('{}/Delta-top-5-{}.png'.format(context['output_dir'], tbl), bbox_inches='tight')
         plt.savefig('{}/Delta-top-5-{}.svg'.format(context['output_dir'], tbl), bbox_inches='tight')
-
 
         print("\tBottom 5 ({}, {}-{})".format(tbl, context['prev_period_str'], context['end_period_str']))
         p = createHeatmap(
@@ -747,7 +727,6 @@ def main():
 
     scoreLastPeriods(context, con)
     scoreLastPeriod_type(context, con)
-    spiderLastPeriod_type(context, con)
     scoreLastPeriods_type(context, con)
 
     detailLastPeriod(context, con)
