@@ -762,15 +762,15 @@ def main():
         print("You cannot specify a file ({}) as an output directory!".format(args.output_dir))
         exit(2)
 
-    # scoreLastPeriods(context, con)
+    scoreLastPeriods(context, con)
     scoreLastPeriod_type(context, con)
-    # scoreLastPeriods_type(context, con)
-    #
-    # detailLastPeriod(context, con)
-    # detailLastPeriod_type(context, con)
-    #
-    # if context['prev_period']:
-    #     deltaToPrevious(context, con)
+    scoreLastPeriods_type(context, con)
+
+    detailLastPeriod(context, con)
+    detailLastPeriod_type(context, con)
+
+    if context['prev_period']:
+        deltaToPrevious(context, con)
 
     con.close()
 
