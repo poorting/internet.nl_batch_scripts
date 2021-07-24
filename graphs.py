@@ -10,10 +10,11 @@ import textwrap
 
 import pandas as pd
 import pprint
-import math
+from math import pi
 import duckdb
 
 import seaborn as sns
+import matplotlib
 import matplotlib.pyplot as plt
 from matplotlib.font_manager import FontProperties
 from matplotlib.colors import LinearSegmentedColormap
@@ -254,7 +255,7 @@ def createBarGraph(df, title=' ', y_label='score/percentage', label_suffix='', p
     p.title.align = 'center'
     p.title.text_font_size = "12pt"
     p.title.text_font_style = "bold"
-    p.xaxis.major_label_orientation = math.pi / 2
+    p.xaxis.major_label_orientation = pi / 2
     p.xgrid.grid_line_color = None
 
     return p
@@ -323,16 +324,19 @@ def createSpiderPlot(df, type_col, title=''):
     N = len(categories)
 
     # What will be the angle of each axis in the plot? (we divide the plot / number of variable)
-    angles = [n / float(N) * 2 * math.pi for n in range(N)]
+    angles = [n / float(N) * 2 * pi for n in range(N)]
     angles += angles[:1]
 
     # Initialise the spider plot
     plt.figure(figsize=(7, 7))
     ax = plt.subplot(polar=True)
-    plt.title(title)
+    plt.title(title, y=1.1, fontsize=15)
+    # ax.set_title('Mail classificatie ({} - {})'.format(dates[0], dates[-1]), fontsize=20, y=1.02)
+
     # If you want the first axis to be on top:
-    ax.set_theta_offset(math.pi / 2)
-    ax.set_theta_direction(-1)
+    ax.set_theta_offset(pi / 2)
+    # If you want labels to go clockwise (counterclockwise is default)
+    ax.set_theta_direction(direction='clockwise')
 
     # Draw one axe per variable + add labels
     plt.xticks(angles[:-1], categories)
@@ -341,7 +345,7 @@ def createSpiderPlot(df, type_col, title=''):
     ticks = [i for i in range(10, 110, 10)]
     tick_labels = ["{}".format(i) for i in range(10, 110, 10)]
     ax.set_rlabel_position(0)
-    plt.yticks(ticks, tick_labels, color="grey", size=7)
+    plt.yticks(ticks, tick_labels, color="grey", size=9)
     plt.ylim(0, 100)
 
     md_types = list(df[type_col])
@@ -351,12 +355,40 @@ def createSpiderPlot(df, type_col, title=''):
         ax.plot(angles, values, linewidth=1, linestyle='solid', label=md_type)
         # ax.fill(angles, values, 'b', alpha=0.1)
 
+    # More space between labels and plot itself
+    rstep = int(ax.get_theta_direction())
+    if rstep > 0:
+        rmin = 0
+        rmax = len(angles)
+    else:
+        rmin = len(angles)-1
+        rmax = -1
+
+    for label, i in zip(ax.get_xticklabels(), range(rmin, rmax, rstep)):
+        angle_rad = angles[i] + ax.get_theta_offset()
+        if angle_rad <= pi / 2:
+            ha = 'left'
+            va = "bottom"
+        elif pi / 2 < angle_rad <= pi:
+            ha = 'right'
+            va = "bottom"
+        elif pi < angle_rad <= (3 * pi / 2):
+            ha = 'right'
+            va = "top"
+        else:
+            ha = 'left'
+            va = "top"
+        label.set_verticalalignment(va)
+        label.set_horizontalalignment(ha)
+
     # Add legend
     fontP = FontProperties()
     fontP.set_size('x-small')
-    leg = plt.legend(title=type_col, bbox_to_anchor=(1.1, 1.0), prop=fontP)
+    leg = plt.legend(title=type_col, bbox_to_anchor=(1.14, 1.05), prop=fontP)
     for line in leg.get_lines():
         line.set_linewidth(2)
+
+    # plt.show()
 
     return ax
 
@@ -711,6 +743,11 @@ def main():
 
     pp = pprint.PrettyPrinter(indent=4)
 
+    # change font
+    matplotlib.rcParams['font.family'] = "sans-serif"
+    matplotlib.rcParams['font.sans-serif'] = "Arial"
+    sns.set()
+
     database = args.database
     con = duckdb.connect(database=database, read_only=True)
 
@@ -725,15 +762,15 @@ def main():
         print("You cannot specify a file ({}) as an output directory!".format(args.output_dir))
         exit(2)
 
-    scoreLastPeriods(context, con)
+    # scoreLastPeriods(context, con)
     scoreLastPeriod_type(context, con)
-    scoreLastPeriods_type(context, con)
-
-    detailLastPeriod(context, con)
-    detailLastPeriod_type(context, con)
-
-    if context['prev_period']:
-        deltaToPrevious(context, con)
+    # scoreLastPeriods_type(context, con)
+    #
+    # detailLastPeriod(context, con)
+    # detailLastPeriod_type(context, con)
+    #
+    # if context['prev_period']:
+    #     deltaToPrevious(context, con)
 
     con.close()
 
