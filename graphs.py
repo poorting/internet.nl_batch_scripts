@@ -34,13 +34,13 @@ _mweb = False
 _mmail = False
 ###############################################################################
 # Nice looking color palettes for graphs
-paletteR = list(reversed(all_palettes['OrRd'][9]))[1:]
-paletteG = list(reversed(all_palettes['Greens'][9]))[1:]
-paletteB = list(reversed(all_palettes['Blues'][9]))[1:]
-paletteRG = list(reversed(all_palettes['Purples'][9]))[1:]
-paletteBG = list(reversed(all_palettes['GnBu'][9]))[1:]
-paletteBR = list(reversed(all_palettes['PuRd'][9]))[1:]
-paletteOrg = list(reversed(all_palettes['Oranges'][9]))[1:]
+paletteR = list(reversed(all_palettes['OrRd'][9]))[2:]
+paletteG = list(reversed(all_palettes['Greens'][9]))[2:]
+paletteB = list(reversed(all_palettes['Blues'][9]))[2:]
+paletteRG = list(reversed(all_palettes['Purples'][9]))[2:]
+paletteBG = list(reversed(all_palettes['GnBu'][9]))[2:]
+paletteBR = list(reversed(all_palettes['PuRd'][9]))[2:]
+paletteOrg = list(reversed(all_palettes['Oranges'][9]))[2:]
 paletteSector = all_palettes['Set2'][8]
 paletteHeatmap = ["#c10000", "#00a100"]
 paletteDelta = ["#ff0000", "#c10000", "#00a100", "#00ff00"]
@@ -226,12 +226,13 @@ def createBarGraph(df, title=' ', y_label='score/percentage', label_suffix='', p
 
     # Create a linear color map from the palette given
     # to avoid overrunning the palette
-    segments =len(palette)
-    if len(periods) > segments:
-        segments = len(periods)
+    # segments =len(palette)
+    # if len(periods) > segments:
+    segments = len(periods)
     my_cmap = LinearSegmentedColormap.from_list('Custom', palette, segments)
 
-    plt.figure(figsize=(14, 8))
+    # if (df.columns)
+    plt.figure(figsize=(3 + (len(df.columns)*len(df))/5, 8))
     ax = plt.subplot()
     ax.set_title(title, fontsize='large', y=1.05)
     ax.set_ylabel('score/percentage', fontsize='medium', fontstyle='italic', color='black', loc='center')
@@ -274,7 +275,10 @@ def createBarGraph(df, title=' ', y_label='score/percentage', label_suffix='', p
         barsx.append(i*(len(periods)+cat_gap) + len(periods)/2 + 0.5)
 
     xticks = categories
-    plt.xticks(barsx, xticks)
+    if len(df) > 3:
+        plt.xticks(barsx, xticks, rotation='horizontal')
+    else:
+        plt.xticks(barsx, xticks, rotation='vertical')
 
     plt.legend()
 
