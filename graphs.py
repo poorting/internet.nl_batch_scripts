@@ -19,12 +19,7 @@ import matplotlib.pyplot as plt
 from matplotlib.font_manager import FontProperties
 from matplotlib.colors import LinearSegmentedColormap
 
-from bokeh.io import show, output_file, export_svgs, export_png
-from bokeh.models import ColumnDataSource, FactorRange, ranges, LabelSet, LinearColorMapper
-from bokeh.plotting import figure
-from bokeh.transform import factor_cmap
 from bokeh.palettes import all_palettes
-from bokeh.transform import transform
 
 from lib import utils as ut
 
@@ -212,58 +207,91 @@ def get_logger(args):
 def createBarGraph(df, title=' ', y_label='score/percentage', label_suffix='', palette=paletteR):
     pp = pprint.PrettyPrinter(indent=4)
 
-    # All but first column are the categories
-    categories = list(df.columns)[1:]
-    # pp.pprint("categories: {}".format(categories))
-    # Convert every value to an int
-    for cat in categories:
-        df = df.astype({cat: int})
+    sns.set_style('ticks')
 
-    # Content of the first column are the subcategories per category
-    subcats = list(df.iloc[:, 0])
-    # pp.pprint("subcategories: {}".format(subcats))
-    x = [(category, subcat) for category in categories for subcat in subcats]
+    barWidth = 0.90
+    # Number of bars as gap in between categories
+    cat_gap = 1
 
-    values = []
-    for cat in categories:
-        values.extend(df[cat].tolist())
+    # Assume first column are the periods
+    df = df.set_index(df.columns[0])
 
-    # pp.pprint("values: {}".format(values))
+    categories = list(df.columns)
+    # print("Categories ({}): {}".format(len(categories), categories))
 
-    value_labels = []
-    for value in values:
-        value_labels.append(str(value) + label_suffix)
+    periods = list(df.index.values)
+    # print("Periods ({}): {}".format(len(periods), periods))
 
-    # pp.pprint("value_labels: {}".format(value_labels))
+    nr_of_bars = len(periods) * len(categories)
 
-    source = ColumnDataSource(data=dict(x=x, y=values, labels=value_labels))
+    # Create a linear color map from the palette given
+    # to avoid overrunning the palette
+    segments =len(palette)
+    if len(periods) > segments:
+        segments = len(periods)
+    my_cmap = LinearSegmentedColormap.from_list('Custom', palette, segments)
 
-    p = figure(x_range=FactorRange(*x), y_range=ranges.Range1d(start=0, end=105), y_minor_ticks=10,
-               y_axis_label=y_label, plot_height=800, plot_width=1280, title=title, title_location='above',
-               toolbar_location=None, tools="")
-    # min_border_top
+    plt.figure(figsize=(14, 8))
+    ax = plt.subplot()
+    ax.set_title(title, fontsize='large', y=1.05)
+    ax.set_ylabel('score/percentage', fontsize='medium', fontstyle='italic', color='black', loc='center')
+    ax.set_xlabel('category', fontsize='medium', fontstyle='italic', color='black', loc='center', labelpad=15.0)
+    ax.spines['bottom'].set_linewidth(0.5)
+    ax.spines['left'].set_linewidth(0.5)
 
-    labels = LabelSet(x='x', y='y', text='labels', level='glyph', x_offset=7, y_offset=5, angle=90, angle_units='deg',
-                      source=source, render_mode='canvas', text_font_size="9pt")
+    ax.set_ylim(0,100)
+    loc = matplotlib.ticker.MultipleLocator(base=10)
+    ax.yaxis.set_major_locator(loc)
+    ax.yaxis.set_minor_locator(matplotlib.ticker.MultipleLocator(2))
+    plt.tick_params(axis='y', which='minor', direction='out', length=3, width=0.5, color='black' )
+    plt.tick_params(axis='y', which='major', width=0.5, color='black', labelsize='x-small' )
+    plt.grid(which='major', axis='y', linestyle='dotted', linewidth=0.5, color='black', alpha=0.3)
 
-    p.vbar(x='x', top='y', width=0.9, source=source, line_color="white",
-           fill_color=factor_cmap('x', palette=palette, factors=subcats, start=1))
+    ax.xaxis.set_minor_locator(matplotlib.ticker.MultipleLocator(len(periods)+1))
+    ax.xaxis.set_major_locator(matplotlib.ticker.MultipleLocator(len(periods)+cat_gap))
+    plt.tick_params(axis='x', which='minor', direction='out', length=0, width=0.5, rotation=90, labelsize='x-small' )
+    plt.tick_params(axis='x', which='major', direction='out', length=0, width=0.5, labelsize='small' )
 
-    p.add_layout(labels)
 
-    p.x_range.range_padding = 0.05
-    p.title.align = 'center'
-    p.title.text_font_size = "12pt"
-    p.title.text_font_style = "bold"
-    p.xaxis.major_label_orientation = pi / 2
-    p.xgrid.grid_line_color = None
+    for i in range(0, len(periods)):
+        rbars = range(i+1, nr_of_bars+cat_gap*len(categories)+1, len(periods)+cat_gap)
+        plt.bar(rbars,
+                df.iloc[i, :].tolist(),
+                width=barWidth,
+                color=my_cmap(i),
+                edgecolor=(1,1,1,1),
+                linewidth=1,
+                label=periods[i],
+                zorder=2,
+                )
+        # Plot the values on top
+        for j, r in enumerate(rbars):
+            plt.text(x=r-0.2, y=df.iloc[i,j] + 1.5, s=str(int(df.iloc[i,j])),
+                     fontweight='normal', size='x-small', rotation='vertical')
 
-    return p
+    barsx=[]
+    for i in range(0, len(categories)):
+        barsx.append(i*(len(periods)+cat_gap) + len(periods)/2 + 0.5)
+
+    xticks = categories
+    plt.xticks(barsx, xticks)
+
+    plt.legend()
+
+    barslots = (len(periods)+cat_gap)*len(categories) - cat_gap
+    plt.margins(x = 0.51/barslots  )
+    ax.set_xlim(0, barslots + 1)
+
+    plt.tight_layout()
+    sns.despine()
+    # plt.show()
+
+    return ax
 
 
 # ------------------------------------------------------------------------------
 def createHeatmap(df, title='',incsign=False):
-    # Creeer een 'heat map' voor de individuele scores van de instellingen/domeinen
+
     pp = pprint.PrettyPrinter(indent=4)
 
     # De score tabel wordt achter het domein gevoegd (bv 'www.surf.nl (97)'), zodat de inhoud zelf alleen 0/1 (rood/groen) is.
@@ -289,13 +317,12 @@ def createHeatmap(df, title='',incsign=False):
 
     # reshape to 1D array of 'passed' with a domain and category for each row.
     df1 = pd.DataFrame(df.stack(), columns=['passed']).reset_index()
-    source = ColumnDataSource(df1)
 
     myColors = ((1.0, 0.0, 0.0, 1.0), (0.75, 0.0, 0.0, 1.0), (0.0, 0.65, 0.0, 1.0), (0.0, 1.0, 0.0, 1.0))
     my_cmap = LinearSegmentedColormap.from_list('Custom', myColors, len(myColors))
 
     plt.figure(figsize=(7, int(len(df) / 2.5)+1.5))
-    plt.title(title)
+    plt.title(title, fontsize='large')
 
     # plot a heatmap with custom grid lines
     ax = sns.heatmap(df,
@@ -312,13 +339,19 @@ def createHeatmap(df, title='',incsign=False):
     ax.set_ylabel('')
     ax.set_xlabel('')
     ax.set_aspect('equal')
+
+    plt.tick_params(axis='y', which='major', width=1, length=0, labelsize='small' )
+    plt.tick_params(axis='x', which='major', width=1, length=5, labelsize='medium')
+
     plt.tight_layout()
 
     return ax
 
 
 # ------------------------------------------------------------------------------
-def createSpiderPlot(df, type_col, title=''):
+def createSpiderPlot(df, type_col, title='', palette=paletteSector):
+
+    sns.set_style('dark')
 
     categories = list(df.columns)[1:]
     N = len(categories)
@@ -352,7 +385,8 @@ def createSpiderPlot(df, type_col, title=''):
     for i, md_type in enumerate(md_types):
         values = df.iloc[i].drop(type_col).values.flatten().tolist()
         values += values[:1]
-        ax.plot(angles, values, linewidth=1, linestyle='solid', label=md_type)
+        # paletteSector
+        ax.plot(angles, values, linewidth=1, linestyle='solid', label=md_type, color=palette[i % len(palette)])
         # ax.fill(angles, values, 'b', alpha=0.1)
 
     # More space between labels and plot itself
@@ -430,12 +464,10 @@ def scoreLastPeriods(context, db_con):
     title = 'Results overall ({}-{})'.format(context['start_period_str'], context['end_period_str'])
     filename="{}/Scores-overall".format(context['output_dir'])
     p = createBarGraph(df, title=title, palette=paletteBR)
-    p.output_backend = "svg"
-    export_svgs(p, filename=filename + ".svg")
-    export_png(p, filename=filename + ".png")
 
-    ret_dfs.append({'name': 'Scores-overall', 'df': df})
-    return ret_dfs
+    plt.savefig(filename + '.svg', bbox_inches='tight')
+    plt.savefig(filename + '.png', bbox_inches='tight')
+    plt.close()
 
 
 # ------------------------------------------------------------------------------
@@ -464,9 +496,9 @@ def scoreLastPeriod_type(context, db_con):
     title = 'Results per {} ({})'.format(context['type'], context['end_period_str'])
     filename = "{}/Scores-overall-per-{}".format(context['output_dir'], context['type'])
     p = createBarGraph(df, title=title, palette=paletteSector)
-    p.output_backend = "svg"
-    export_svgs(p, filename=filename + ".svg")
-    export_png(p, filename=filename + ".png")
+    plt.savefig(filename + '.svg', bbox_inches='tight')
+    plt.savefig(filename + '.png', bbox_inches='tight')
+    plt.close()
 
     # SPIDER PLOT
     print("\tCreating spider plot")
@@ -476,7 +508,7 @@ def scoreLastPeriod_type(context, db_con):
     #     df.drop('score(mail)', axis=1, inplace=True)
     title = "Results per {} ({})".format(context['type'], context['end_period_str'])
 
-    createSpiderPlot(df, context['type'], title=title)
+    createSpiderPlot(df, context['type'], title=title, palette=paletteSector)
 
     filename = "{}/Spiderplot-{}".format(context['output_dir'], context['type'])
     plt.savefig(filename + '.svg', bbox_inches='tight')
@@ -553,33 +585,46 @@ def deltaToPrevious(context, db_con):
         # Now sort by score (descending), then domain (ascending)
         df.sort_values(by=['score', 'domain'], ascending=[False, True], inplace=True)
 
+        # pp.pprint(df)
+        # Find the top/bottom 3 and then extend with all rows with the same improvement/deterioration as the number 3
+        # (otherwise nr. 4 may have same improvement as nr. 3, but be excluded on grounds of alphabetical ordering)
+        top = 2  # first row is 0
+        if df.iloc[top,0] > 0:
+            while df.iloc[top, 0] == df.iloc[top+1,0]:
+                top += 1
+
+        bot = -3 # last row is -1
+        if df.iloc[bot, 0] < 0:
+            while df.iloc[bot, 0] == df.iloc[bot-1,0]:
+                bot -= 1
+
         # Make domains a column again (otherwise Heatmap will fail)
         df.reset_index(level=0, inplace=True)
-        dfTop = df.head(5).copy()
-        dfBot = df.tail(5).copy()
+
+        dfTop = df.head(top+1).copy()
+        dfBot = df.tail(abs(bot)).copy()
 
         print("\tDelta for all ({}, {}-{})".format(tbl, context['prev_period_str'], context['end_period_str']))
         p = createHeatmap(
             df,
-            title='Delta ({0}, {1}-{2})'.format(tbl, context['prev_period_str'], context['end_period_str']))
+            title='Delta ({0}, {1}-{2})'.format(tbl, context['prev_period_str'], context['end_period_str']),
+            incsign=True)
         plt.savefig('{}/Delta-all-{}.png'.format(context['output_dir'], tbl), bbox_inches='tight')
         plt.savefig('{}/Delta-all-{}.svg'.format(context['output_dir'], tbl), bbox_inches='tight')
 
-        print("\tTop 5 ({}, {}-{})".format(tbl, context['prev_period_str'], context['end_period_str']))
+        print("\tTop {} ({}, {}-{})".format(len(dfTop),tbl, context['prev_period_str'], context['end_period_str']))
         p = createHeatmap(
             dfTop,
-            title="Top 5 ({0}, {1}-{2})".format(tbl, context['prev_period_str'], context['end_period_str']),
-            incsign=True)
-        plt.savefig('{}/Delta-top-5-{}.png'.format(context['output_dir'], tbl), bbox_inches='tight')
-        plt.savefig('{}/Delta-top-5-{}.svg'.format(context['output_dir'], tbl), bbox_inches='tight')
+            title="Top {0} ({1}, {2}-{3})".format(len(dfTop), tbl, context['prev_period_str'], context['end_period_str']), incsign=True)
+        plt.savefig('{}/Delta-top-{}.png'.format(context['output_dir'], tbl), bbox_inches='tight')
+        plt.savefig('{}/Delta-top-{}.svg'.format(context['output_dir'], tbl), bbox_inches='tight')
 
-        print("\tBottom 5 ({}, {}-{})".format(tbl, context['prev_period_str'], context['end_period_str']))
+        print("\tBottom {} ({}, {}-{})".format(len(dfBot), tbl, context['prev_period_str'], context['end_period_str']))
         p = createHeatmap(
             dfBot,
-            title="Bottom 5 ({0}, {1}-{2})".format(tbl, context['prev_period_str'], context['end_period_str']),
-            incsign=True)
-        plt.savefig('{}/Delta-bottom-5-{}.png'.format(context['output_dir'], tbl), bbox_inches='tight')
-        plt.savefig('{}/Delta-bottom-5-{}.svg'.format(context['output_dir'], tbl), bbox_inches='tight')
+            title="Bottom {0} ({1}, {2}-{3})".format(len(dfBot), tbl, context['prev_period_str'], context['end_period_str']), incsign=True)
+        plt.savefig('{}/Delta-bottom-{}.png'.format(context['output_dir'], tbl), bbox_inches='tight')
+        plt.savefig('{}/Delta-bottom-{}.svg'.format(context['output_dir'], tbl), bbox_inches='tight')
 
 
 # ------------------------------------------------------------------------------
@@ -612,9 +657,9 @@ def scoreLastPeriods_type(context, db_con):
         title = 'Results {} ({}-{})'.format(metadata, context['start_period_str'], context['end_period_str'])
         filename = "{}/Scores-{}".format(context['output_dir'], metadata)
         p = createBarGraph(df, title=title, palette=type_palettes[i % len(type_palettes)])
-        p.output_backend = "svg"
-        export_svgs(p, filename=filename + ".svg")
-        export_png(p, filename=filename + ".png")
+        plt.savefig(filename + '.svg', bbox_inches='tight')
+        plt.savefig(filename + '.png', bbox_inches='tight')
+        plt.close()
 
         ret_dfs.append({'name': "Scores-{}".format(metadata), 'df': df})
 
@@ -746,7 +791,10 @@ def main():
     # change font
     matplotlib.rcParams['font.family'] = "sans-serif"
     matplotlib.rcParams['font.sans-serif'] = "Arial"
+
     sns.set()
+    # sns.set_style('ticks')
+    # sns.set_style('dark')
 
     database = args.database
     con = duckdb.connect(database=database, read_only=True)

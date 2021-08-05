@@ -77,7 +77,7 @@ def parser_add_arguments():
         formatter_class=argparse.RawTextHelpFormatter, )
 
     # usage: process-results.py [-h] [-d FILE] [-m col[,col1,...]] [-s [sheet_name]] [-r] [-v] [--debug] [-V] {json file|json dir} {csv|xlsx|duckdb} outputfile
-    parser.usage = "process.py {json file|json dir} {csv|xlsx|duckdb} outputfile [-d FILE] [-m col[,col1,...]] [-r]"
+    parser.usage = "process.py {json file|json dir} {csv|xlsx|duckdb} outputfile [-d FILE] [-m col[,col1,...]] [-i]"
 
     parser.add_argument("filename",
                         metavar='{json file|json dir}',
@@ -147,6 +147,16 @@ def parser_add_arguments():
                         
                         As a side effect this option does raw processing of the json file(s), meaning
                         that all categories and tests are processed rather than just a fixed set. 
+
+                        '''),
+                        action="store_true")
+
+    parser.add_argument("-e",
+                        help=textwrap.dedent('''\
+                        Export the duckdb database as a directory as well (in directory outputfile.duckdb.d)
+                        useful when your duckdb cli is a different version than the one used by the python venv 
+                        and refuses to open the outputfile.duckdb file. simply open duckdb cli and import the 
+                        database with:  IMPORT DATABASE 'outputfile.duckdb.d'; 
 
                         '''),
                         action="store_true")
@@ -373,7 +383,7 @@ def main():
             if os.path.isfile(duckdb_file):
                 print("Removing {}".format(duckdb_file))
                 os.remove(duckdb_file)
-            print("Creating {}.duckdb file".format(outputfile))
+            print("Creating {} file".format(duckdb_file))
             con = duckdb.connect(database=duckdb_file, read_only=False)
             for mt in ['web', 'mail']:
                 if len(csvs[mt]) > 0:
@@ -384,6 +394,8 @@ def main():
                     logger.info("CREATE TABLE {} AS SELECT * FROM read_csv_auto('{}')".format(mt, tmpfilename))
                     con.execute("CREATE TABLE {} AS SELECT * FROM read_csv_auto('{}')".format(mt, tmpfilename))
 
+            if args.e:
+                con.execute("EXPORT DATABASE '{}.d' (FORMAT CSV, DELIMITER '|')".format(duckdb_file))
             con.close()
 
 
