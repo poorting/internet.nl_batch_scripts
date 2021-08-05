@@ -41,7 +41,7 @@ paletteRG = list(reversed(all_palettes['Purples'][9]))[1:-2]
 paletteBG = list(reversed(all_palettes['GnBu'][9]))[1:-2]
 paletteBR = list(reversed(all_palettes['PuRd'][9]))[1:-2]
 paletteOrg = list(reversed(all_palettes['Oranges'][9]))[1:-2]
-paletteSector = all_palettes['Set2'][8]
+paletteSector = all_palettes['Set2'][6]
 paletteHeatmap = ["#c10000", "#00a100"]
 paletteDelta = ["#ff0000", "#c10000", "#00a100", "#00ff00"]
 
@@ -226,8 +226,6 @@ def createBarGraph(df, title=' ', y_label='score/percentage', label_suffix='', p
 
     # Create a linear color map from the palette given
     # to avoid overrunning the palette
-    # segments =len(palette)
-    # if len(periods) > segments:
     segments = len(periods)
     my_cmap = LinearSegmentedColormap.from_list('Custom', palette, segments)
 
@@ -386,11 +384,14 @@ def createSpiderPlot(df, type_col, title='', palette=paletteSector):
     plt.ylim(0, 100)
 
     md_types = list(df[type_col])
+
+    segments = len(md_types)
+    my_cmap = LinearSegmentedColormap.from_list('Custom', palette, segments)
+
     for i, md_type in enumerate(md_types):
         values = df.iloc[i].drop(type_col).values.flatten().tolist()
         values += values[:1]
-        # paletteSector
-        ax.plot(angles, values, linewidth=1, linestyle='solid', label=md_type, color=palette[i % len(palette)])
+        ax.plot(angles, values, linewidth=1, linestyle='solid', label=md_type, color=my_cmap(i))
         # ax.fill(angles, values, 'b', alpha=0.1)
 
     # More space between labels and plot itself
