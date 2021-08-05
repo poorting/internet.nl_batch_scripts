@@ -2,7 +2,6 @@ duckdb
 bokeh
 matplotlib
 openpyxl
-packaging==21.0
 pandas
 requests
 seaborn
