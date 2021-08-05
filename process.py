@@ -357,7 +357,7 @@ def main():
                     file.close()
         elif args.filetype == 'xlsx':
             print("Creating {}.xlsx file".format(outputfile))
-            with pd.ExcelWriter('output.xlsx') as writer:
+            with pd.ExcelWriter('{}.xlsx'.format(outputfile)) as writer:
                 for mt in ['web', 'mail']:
                     if len(csvs[mt]) > 0:
                         tmpfile, tmpfilename = tempfile.mkstemp()
@@ -381,11 +381,11 @@ def main():
                     tmpfile, tmpfilename = tempfile.mkstemp()
                     with open(tmpfile, 'w') as f:
                         print(csvs[mt][0], file=f)
-
                     logger.info("CREATE TABLE {} AS SELECT * FROM read_csv_auto('{}')".format(mt, tmpfilename))
                     con.execute("CREATE TABLE {} AS SELECT * FROM read_csv_auto('{}')".format(mt, tmpfilename))
 
             con.close()
+
 
 if __name__ == '__main__':
     # Run the main process
