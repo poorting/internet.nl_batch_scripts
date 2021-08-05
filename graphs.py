@@ -34,13 +34,13 @@ _mweb = False
 _mmail = False
 ###############################################################################
 # Nice looking color palettes for graphs
-paletteR = list(reversed(all_palettes['OrRd'][9]))[2:]
-paletteG = list(reversed(all_palettes['Greens'][9]))[2:]
-paletteB = list(reversed(all_palettes['Blues'][9]))[2:]
-paletteRG = list(reversed(all_palettes['Purples'][9]))[2:]
-paletteBG = list(reversed(all_palettes['GnBu'][9]))[2:]
-paletteBR = list(reversed(all_palettes['PuRd'][9]))[2:]
-paletteOrg = list(reversed(all_palettes['Oranges'][9]))[2:]
+paletteR = list(reversed(all_palettes['OrRd'][9]))[1:-2]
+paletteG = list(reversed(all_palettes['Greens'][9]))[1:-2]
+paletteB = list(reversed(all_palettes['Blues'][9]))[1:-2]
+paletteRG = list(reversed(all_palettes['Purples'][9]))[1:-2]
+paletteBG = list(reversed(all_palettes['GnBu'][9]))[1:-2]
+paletteBR = list(reversed(all_palettes['PuRd'][9]))[1:-2]
+paletteOrg = list(reversed(all_palettes['Oranges'][9]))[1:-2]
 paletteSector = all_palettes['Set2'][8]
 paletteHeatmap = ["#c10000", "#00a100"]
 paletteDelta = ["#ff0000", "#c10000", "#00a100", "#00ff00"]
