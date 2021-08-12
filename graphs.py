@@ -16,7 +16,7 @@ import duckdb
 import seaborn as sns
 import matplotlib
 import matplotlib.pyplot as plt
-import matplotlib.font_manager
+import matplotlib.font_manager as fm
 from matplotlib.font_manager import FontProperties
 from matplotlib.colors import LinearSegmentedColormap
 
@@ -27,6 +27,8 @@ from lib import utils as ut
 ###############################################################################
 # Program settings
 VERBOSE, DEBUG = False, False
+_graph_font = 'Inter'
+
 program_name = os.path.basename(__file__)
 VERSION = 0.2
 logger = logging.getLogger(__name__)
@@ -122,6 +124,14 @@ def parser_add_arguments():
                         action="store",
                         metavar='TYPE',
                         default='type')
+
+    parser.add_argument("-f",
+                        help=textwrap.dedent('''\
+                            Specify the font to use (e.g. Helvetica)
+                             '''),
+                        action="store",
+                        metavar='FONT')
+
     parser.add_argument("-v", "--verbose",
                         help="more verbose output",
                         action="store_true")
@@ -233,9 +243,9 @@ def createBarGraph(df, title=' ', y_label='score/percentage', label_suffix='', p
     # if (df.columns)
     plt.figure(figsize=(3 + (len(df.columns)*len(df))/5.5, 8))
     ax = plt.subplot()
-    ax.set_title(title, fontsize='large', y=1.05)
-    ax.set_ylabel('score/percentage', fontsize='medium', fontstyle='italic', color='black', loc='center')
-    ax.set_xlabel('category', fontsize='medium', fontstyle='italic', color='black', loc='center', labelpad=15.0)
+    ax.set_title(title, fontname=_graph_font, fontsize='large', y=1.05)
+    ax.set_ylabel('score/percentage',  fontname=_graph_font, fontsize='medium', fontstyle='italic', color='black', loc='center')
+    ax.set_xlabel('category',  fontname=_graph_font, fontsize='medium', fontstyle='italic', color='black', loc='center', labelpad=15.0)
     ax.spines['bottom'].set_linewidth(0.5)
     ax.spines['left'].set_linewidth(0.5)
 
@@ -252,6 +262,8 @@ def createBarGraph(df, title=' ', y_label='score/percentage', label_suffix='', p
     plt.tick_params(axis='x', which='minor', direction='out', length=0, width=0.5, rotation=90, labelsize='x-small' )
     plt.tick_params(axis='x', which='major', direction='out', length=0, width=0.5, labelsize='small' )
 
+    plt.xticks(fontname=_graph_font)
+    plt.yticks(fontname=_graph_font)
 
     for i in range(0, len(periods)):
         rbars = range(i+1, nr_of_bars+cat_gap*len(categories)+1, len(periods)+cat_gap)
@@ -267,7 +279,7 @@ def createBarGraph(df, title=' ', y_label='score/percentage', label_suffix='', p
         # Plot the values on top
         for j, r in enumerate(rbars):
             plt.text(x=r-0.2, y=df.iloc[i,j] + 1.5, s=str(int(df.iloc[i,j])),
-                     fontweight='light', fontsize=10, rotation='vertical')
+                     fontname=_graph_font, fontweight='normal', fontsize=10, rotation='vertical')
 
     barsx=[]
     for i in range(0, len(categories)):
@@ -275,11 +287,14 @@ def createBarGraph(df, title=' ', y_label='score/percentage', label_suffix='', p
 
     xticks = categories
     if len(df) > 3:
-        plt.xticks(barsx, xticks, rotation='horizontal')
+        plt.xticks(barsx, xticks, rotation='horizontal',  fontname=_graph_font)
     else:
-        plt.xticks(barsx, xticks, rotation='vertical')
+        plt.xticks(barsx, xticks, rotation='vertical',  fontname=_graph_font)
 
-    plt.legend()
+    leg = plt.legend(prop={'family': _graph_font})
+    # plt.legend(prop={'family': font_name, 'size': 20})
+    for line in leg.get_lines():
+        line.set_linewidth(7)
 
     barslots = (len(periods)+cat_gap)*len(categories) - cat_gap
     plt.margins(x = 0.51/barslots  )
@@ -343,7 +358,7 @@ def createHeatmap(df, title='',incsign=False):
     ax.set_xlabel('')
     ax.set_aspect('equal')
 
-    plt.tick_params(axis='y', which='major', width=1, length=0, labelsize='small' )
+    plt.tick_params(axis='y', which='major', width=1, length=0, labelsize='medium' )
     plt.tick_params(axis='x', which='major', width=1, length=5, labelsize='medium')
 
     plt.tight_layout()
@@ -352,9 +367,13 @@ def createHeatmap(df, title='',incsign=False):
 
 
 # ------------------------------------------------------------------------------
-def createSpiderPlot(df, type_col, title='', palette=paletteSector):
+def createSpiderPlot(df, title='', fill=False, palette=paletteSector):
+
+    pp = pprint.PrettyPrinter(indent=4)
 
     sns.set_style('dark')
+
+    # pp.pprint(df)
 
     categories = list(df.columns)[1:]
     N = len(categories)
@@ -364,10 +383,9 @@ def createSpiderPlot(df, type_col, title='', palette=paletteSector):
     angles += angles[:1]
 
     # Initialise the spider plot
-    plt.figure(figsize=(7, 7))
+    plt.figure(figsize=(8, 8))
     ax = plt.subplot(polar=True)
-    plt.title(title, y=1.1, fontsize=15)
-    # ax.set_title('Mail classificatie ({} - {})'.format(dates[0], dates[-1]), fontsize=20, y=1.02)
+    plt.title(title, y=1.1, fontsize=15, fontname=_graph_font)
 
     # If you want the first axis to be on top:
     ax.set_theta_offset(pi / 2)
@@ -382,18 +400,20 @@ def createSpiderPlot(df, type_col, title='', palette=paletteSector):
     tick_labels = ["{}".format(i) for i in range(10, 110, 10)]
     ax.set_rlabel_position(0)
     plt.yticks(ticks, tick_labels, color="grey", size=9)
+    plt.yticks(fontname=_graph_font)
     plt.ylim(0, 100)
 
-    md_types = list(df[type_col])
-
+    # md_types = list(df[type_col])
+    md_types = list(df.iloc[:, 0])
     segments = len(md_types)
     my_cmap = LinearSegmentedColormap.from_list('Custom', palette, segments)
 
     for i, md_type in enumerate(md_types):
-        values = df.iloc[i].drop(type_col).values.flatten().tolist()
+        values = df.iloc[i].drop(df.columns[0]).values.flatten().tolist()
         values += values[:1]
         ax.plot(angles, values, linewidth=1, linestyle='solid', label=md_type, color=my_cmap(i))
-        # ax.fill(angles, values, 'b', alpha=0.1)
+        if fill:
+            ax.fill(angles, values, color=my_cmap(i), alpha=0.6)
 
     # More space between labels and plot itself
     rstep = int(ax.get_theta_direction())
@@ -421,12 +441,14 @@ def createSpiderPlot(df, type_col, title='', palette=paletteSector):
         label.set_verticalalignment(va)
         label.set_horizontalalignment(ha)
 
+    plt.xticks(fontname=_graph_font)
+
     # Add legend
-    fontP = FontProperties()
-    fontP.set_size('x-small')
-    leg = plt.legend(title=type_col, bbox_to_anchor=(1.14, 1.05), prop=fontP)
+    leg = plt.legend(bbox_to_anchor=(1.14, 1.05), prop={'family': _graph_font, 'size': 'x-small'})
+    leg.set_title(title=df.columns[0], prop={'family': _graph_font})
     for line in leg.get_lines():
-        line.set_linewidth(2)
+        line.set_linewidth(7)
+        line.set_solid_capstyle('butt')
 
     # plt.show()
 
@@ -514,12 +536,25 @@ def scoreLastPeriod_type(context, db_con):
     #     df.drop('score(mail)', axis=1, inplace=True)
     title = "Results per {} ({})".format(context['type'], context['end_period_str'])
 
-    createSpiderPlot(df, context['type'], title=title, palette=paletteSector)
-
-    filename = "{}/Spiderplot-{}".format(context['output_dir'], context['type'])
+    createSpiderPlot(df, title=title, palette=paletteSector, fill=False)
+    filename = "{}/Spiderplot-per-{}".format(context['output_dir'], context['type'])
     plt.savefig(filename + '.svg', bbox_inches='tight')
     plt.savefig(filename + '.png', bbox_inches='tight')
     plt.close()
+
+    # See if we can make individual plots for every type
+    # pp.pprint(df)
+    for i in range(0, len(df)):
+        df1 = df.iloc[i,:].to_frame().transpose()
+        type = df.iloc[i,0]
+        print("\tCreating spider plot ({})".format(type))
+        title = "Results for {} ({})".format(type, context['end_period_str'])
+        pal_type = ('#808080', paletteSector[i % len(df)])
+        createSpiderPlot(df1, title=title, palette=pal_type, fill=True)
+        filename = "{}/Spiderplot-{}".format(context['output_dir'], type)
+        plt.savefig(filename + '.svg', bbox_inches='tight')
+        plt.savefig(filename + '.png', bbox_inches='tight')
+        plt.close()
 
 
 # ------------------------------------------------------------------------------
@@ -783,7 +818,7 @@ def get_Context(con, args):
 ###############################################################################
 def main():
     # Set global settings according to command line arguments
-    global VERBOSE, DEBUG, logger, _mweb, _mmail
+    global VERBOSE, DEBUG, logger, _mweb, _mmail, _graph_font
 
     parser = parser_add_arguments()
     args = parser.parse_args()
@@ -795,12 +830,31 @@ def main():
     pp = pprint.PrettyPrinter(indent=4)
 
     # change font
-    matplotlib.rcParams['font.family'] = "sans-serif"
-    matplotlib.rcParams['font.sans-serif'] = ['Helvetica Neue', 'Helvetica', 'DejaVu Sans', 'Tahoma', 'Lucida Grande', 'Verdana']
 
     sns.set()
     # sns.set_style('ticks')
     # sns.set_style('dark')
+
+    matplotlib.rcParams['font.family'] = "sans-serif"
+
+    if args.f:
+        fts = plt.rcParams['font.sans-serif']
+        fts.insert(0, args.f)
+        plt.rcParams['font.sans-serif'] = fts
+
+    # pp.pprint(plt.rcParams['font.family'])
+    # pp.pprint(plt.rcParams['font.sans-serif'])
+
+    for font in plt.rcParams['font.sans-serif']:
+        try:
+            font_path = fm.findfont(font, fallback_to_default=False, rebuild_if_missing=True)
+            _graph_font = font
+            print("Selected font: {}".format(font))
+            break
+        except ValueError as ve:
+            if args.f:
+                print(ve)
+            continue
 
     database = args.database
     con = duckdb.connect(database=database, read_only=True)
