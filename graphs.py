@@ -244,8 +244,8 @@ def createBarGraph(df, title=' ', y_label='score/percentage', label_suffix='', p
     plt.figure(figsize=(3 + (len(df.columns)*len(df))/5.5, 8))
     ax = plt.subplot()
     ax.set_title(title, fontname=_graph_font, fontsize='large', y=1.05)
-    ax.set_ylabel('score/percentage',  fontname=_graph_font, fontsize='medium', fontstyle='italic', color='black', loc='center')
-    ax.set_xlabel('category',  fontname=_graph_font, fontsize='medium', fontstyle='italic', color='black', loc='center', labelpad=15.0)
+    ax.set_ylabel('score/percentage',  fontname=_graph_font, fontsize='medium', loc='center')
+    ax.set_xlabel('category',  fontname=_graph_font, fontsize='medium', loc='center', labelpad=15.0)
     ax.spines['bottom'].set_linewidth(0.5)
     ax.spines['left'].set_linewidth(0.5)
 
@@ -254,7 +254,7 @@ def createBarGraph(df, title=' ', y_label='score/percentage', label_suffix='', p
     ax.yaxis.set_major_locator(loc)
     ax.yaxis.set_minor_locator(matplotlib.ticker.MultipleLocator(2))
     plt.tick_params(axis='y', which='minor', direction='out', length=3, width=0.5)
-    plt.tick_params(axis='y', which='major', width=0.5, labelsize='x-small')
+    plt.tick_params(axis='y', which='major', width=0.5, labelsize='small')
     plt.grid(which='major', axis='y', linestyle='dotted', linewidth=0.5, color='black', alpha=0.3)
 
     ax.xaxis.set_minor_locator(matplotlib.ticker.MultipleLocator(len(periods)+1))
@@ -279,7 +279,7 @@ def createBarGraph(df, title=' ', y_label='score/percentage', label_suffix='', p
         # Plot the values on top
         for j, r in enumerate(rbars):
             plt.text(x=r-0.2, y=df.iloc[i,j] + 1.5, s=str(int(df.iloc[i,j])),
-                     fontname=_graph_font, fontweight='normal', fontsize=10, rotation='vertical')
+                     fontname=_graph_font, fontweight='normal', fontsize='small', rotation='vertical')
 
     barsx=[]
     for i in range(0, len(categories)):
@@ -291,8 +291,7 @@ def createBarGraph(df, title=' ', y_label='score/percentage', label_suffix='', p
     else:
         plt.xticks(barsx, xticks, rotation='vertical',  fontname=_graph_font)
 
-    leg = plt.legend(prop={'family': _graph_font})
-    # plt.legend(prop={'family': font_name, 'size': 20})
+    leg = plt.legend(prop={'family': _graph_font}, framealpha=0.5, edgecolor='grey')
     for line in leg.get_lines():
         line.set_linewidth(7)
 
@@ -837,13 +836,12 @@ def main():
 
     matplotlib.rcParams['font.family'] = "sans-serif"
 
-    if args.f:
-        fts = plt.rcParams['font.sans-serif']
-        fts.insert(0, args.f)
-        plt.rcParams['font.sans-serif'] = fts
+    # Prefer Helvetica or Helvetica Neue if available
+    plt.rcParams['font.sans-serif'].insert(0, 'Helvetica Neue')
+    plt.rcParams['font.sans-serif'].insert(0, 'Helvetica')
 
-    # pp.pprint(plt.rcParams['font.family'])
-    # pp.pprint(plt.rcParams['font.sans-serif'])
+    if args.f:
+        plt.rcParams['font.sans-serif'].insert(0, args.f)
 
     for font in plt.rcParams['font.sans-serif']:
         try:
