@@ -333,12 +333,12 @@ def createHeatmap(df, title='',incsign=False):
     df.columns.name = 'category'
 
     # reshape to 1D array of 'passed' with a domain and category for each row.
-    df1 = pd.DataFrame(df.stack(), columns=['passed']).reset_index()
+    # df1 = pd.DataFrame(df.stack(), columns=['passed']).reset_index()
 
     myColors = ((1.0, 0.0, 0.0, 1.0), (0.75, 0.0, 0.0, 1.0), (0.0, 0.65, 0.0, 1.0), (0.0, 1.0, 0.0, 1.0))
     my_cmap = LinearSegmentedColormap.from_list('Custom', myColors, len(myColors))
 
-    plt.figure(figsize=(7, int(len(df) / 2.5)+1.5))
+    plt.figure(figsize=(7, len(df)/2 + 1.75))
     plt.title(title, fontsize='large')
 
     # plot a heatmap with custom grid lines
