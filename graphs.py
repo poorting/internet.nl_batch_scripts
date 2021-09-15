@@ -548,7 +548,7 @@ def scoreLastPeriod_type(context, db_con):
         type = df.iloc[i,0]
         print("\tCreating spider plot ({})".format(type))
         title = "Results for {} ({})".format(type, context['end_period_str'])
-        pal_type = ('#808080', paletteSector[i % len(df)])
+        pal_type = ('#808080', paletteSector[i % len(paletteSector)])
         createSpiderPlot(df1, title=title, palette=pal_type, fill=True)
         filename = "{}/Spiderplot-{}".format(context['output_dir'], type)
         plt.savefig(filename + '.svg', bbox_inches='tight')
