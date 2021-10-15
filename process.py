@@ -77,7 +77,8 @@ def parser_add_arguments():
         formatter_class=argparse.RawTextHelpFormatter, )
 
     # usage: process-results.py [-h] [-d FILE] [-m col[,col1,...]] [-s [sheet_name]] [-r] [-v] [--debug] [-V] {json file|json dir} {csv|xlsx|duckdb} outputfile
-    parser.usage = "process.py {json file|json dir} {csv|xlsx|duckdb} outputfile [-d FILE] [-m col[,col1,...]] [-i]"
+    # parser.usage = "process.py {json file|json dir} {csv|xlsx|duckdb} outputfile [-d FILE] [-m col[,col1,...]] [-i]"
+    parser.usage = "process.py {json file|json dir} outputfile [-d FILE] [-m col[,col1,...]] [-i]"
 
     parser.add_argument("filename",
                         metavar='{json file|json dir}',
@@ -89,18 +90,22 @@ def parser_add_arguments():
                         action="store",
                         )
 
-    parser.add_argument("filetype",
-                        metavar='{csv|xlsx|duckdb}',
-                        help=textwrap.dedent('''\
-                        type of \033[3moutputfile\033[0m(s) to produce
-                        
-                        '''),
-                        choices=['csv', 'xlsx', 'duckdb'],
-                        action="store",
-                        )
+    # parser.add_argument("filetype",
+    #                     metavar='{csv|xlsx|duckdb}',
+    #                     help=textwrap.dedent('''\
+    #                     type of \033[3moutputfile\033[0m(s) to produce
+    #
+    #                     '''),
+    #                     choices=['csv', 'xlsx', 'duckdb'],
+    #                     action="store",
+    #                     )
 
     parser.add_argument("outputfile",
-                        help="filename (without extension) to store the results in")
+                        help=textwrap.dedent('''\
+                        filename (with extension) to store the results in. The extension defines the 
+                        type of file. Supported formats are duckdb, csv or xlsx.
+                        '''),
+                        )
 
     parser.add_argument("-d",
                         metavar='FILE',
@@ -269,7 +274,14 @@ def main():
 
     filelist = []
     filename = args.filename
-    outputfile = args.outputfile
+
+    if len(args.outputfile.split('.')) < 2:
+        logger.error("No extension specified for the output file")
+        parser.print_help(sys.stderr)
+        exit(1)
+
+    args.filetype = args.outputfile.split('.')[-1].lower()
+    outputfile = ".".join(args.outputfile.split('.')[:-1])
 
     if os.path.isdir(filename):
         if not filename.endswith("/"):
