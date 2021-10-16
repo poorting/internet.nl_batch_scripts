@@ -281,6 +281,10 @@ def main():
         exit(1)
 
     args.filetype = args.outputfile.split('.')[-1].lower()
+    if args.filetype not in ['xlsx','csv','duckdb']:
+        logger.error("Only xlsx, csv or duckdb formats are supported")
+        parser.print_help(sys.stderr)
+        exit(1)
     outputfile = ".".join(args.outputfile.split('.')[:-1])
 
     if os.path.isdir(filename):
