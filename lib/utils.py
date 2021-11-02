@@ -491,6 +491,7 @@ def _JSONtoCSV2_0(data, domains_metadata, columns_to_add):
     logger.info("Measurement type: {}".format(measurementType))
     if not domains_metadata.empty:
         domains_metadata = domains_metadata.set_index(measurementType, inplace=False)
+        # pp.pprint(domains_metadata)
 
     for domainname in domains:
         domainresults = domains[domainname]
@@ -523,6 +524,7 @@ def _JSONtoCSV2_0(data, domains_metadata, columns_to_add):
                     else:
                         line.append({'md_{}'.format(md): TYPE_UNKNOWN})
             else:
+                logger.info("'{}' is NOT in metadata".format(domainname))
                 for md in columns_to_add:
                     line.append({'md_{}'.format(md): TYPE_UNKNOWN})
 
@@ -643,12 +645,12 @@ def _JSONtoCSVall1_1(data, domains_metadata, columns_to_add):
                 for md in columns_to_add:
                     # check if metadata column exists first
                     if md in domains_metadata.columns:
-                        line.append({'md_{}'.format(md): domains_metadata.at[domainname, md]})
+                        line.append({'{}'.format(md): domains_metadata.at[domainname, md]})
                     else:
-                        line.append({'md_{}'.format(md): TYPE_UNKNOWN})
+                        line.append({'{}'.format(md): TYPE_UNKNOWN})
             else:
                 for md in columns_to_add:
-                    line.append({'md_{}'.format(md): TYPE_UNKNOWN})
+                    line.append({'{}'.format(md): TYPE_UNKNOWN})
 
         if 'status' in domainresults:
             line.append({'status': domainresults['status']})
@@ -738,12 +740,12 @@ def _JSONtoCSVall2_0(data, domains_metadata, columns_to_add):
                 for md in columns_to_add:
                     # check if metadata column exists first
                     if md in domains_metadata.columns:
-                        line.append({'md_{}'.format(md): domains_metadata.at[domainname, md]})
+                        line.append({'{}'.format(md): domains_metadata.at[domainname, md]})
                     else:
-                        line.append({'md_{}'.format(md): TYPE_UNKNOWN})
+                        line.append({'{}'.format(md): TYPE_UNKNOWN})
             else:
                 for md in columns_to_add:
-                    line.append({'md_{}'.format(md): TYPE_UNKNOWN})
+                    line.append({'{}'.format(md): TYPE_UNKNOWN})
 
         if 'status' in domainresults:
             line.append({'status': domainresults['status']})
