@@ -113,12 +113,14 @@ To check the status of a specific request, use the *stat* command together with 
 
 
 ### Retrieving the results
-Once the status of a request is *'generating'* or *'done'*, the measurements are ready.
+Once the status of a request is *'generating'* or *'done'*, the measurements are ready. If the status is *'generating'* then the measurement is done, but the report still needs to be generated from the results. This will happen when you request the status of the request or try to retrieve its results. After generating the report, the status will change from *generating* to *done*.
 
-The report can be retrieved by using the *get* command with the *request_id*, e.g.:
+With either state, the report can be retrieved by using the *get* command with the *request_id*, e.g.:
 ```
 ./batch.py get cb7be7ed776e464796cd8514c6e2a0e7
 ```
+The script will recognise measurements that have a *generating* status and will poll in 5 second intervals for readiness of the report, retrieving it once it is ready.
+
 The output will be shown on screen by default unless an output file is specified with the -o argument, e.g.: 
 
 ```
@@ -132,16 +134,16 @@ You can process the results with the process.py script, either an individual mea
 #### Storing as duckdb
 To process all measurements in the *measurements* directory and store them in the duckdb database *output.duckdb* use:
 ```
-./process.py measurements duckdb output
+./process.py measurements output.duckdb
 ```
-Mail and web measurements results will be stored in separate tables ('mail' and 'web' respectively).
+If processing multiple measurements, mail and web measurements results will be stored in separate tables ('mail' and 'web' respectively).
 
 The script will also add information on the month and quarter of the measurements (yyyyQ#, e.g. 2020Q4). Please note that a measurement done in the months 1,4,7,10 (January, April, July, October) will be marked as measurements for the *preceding* quarter. So a measurement in January 2021 will be marked as a 2020Q4 measurement. It helps to do measurements roughly on the same day of the month/quarter. If you want to do quarter measurements then do them at the start of January, April, July, and October.
 
 #### Storing as other formats
 
-Measurement results can also be stored in an xlsx file or csv files by replacing *duckdb* in the command above with *xlsx* or *csv*.
-For xlsx the mail and web results will be put into separate sheets ('mail' and 'web'). With csv two separate output files will be produced for the mail and web results.
+Measurement results can also be stored in an xlsx file or csv files by simply changing the *duckdb* extension of the output file in the command shown above to *xlsx* or *csv*.
+For xlsx format and multiple measurements, the mail and web results will be put into separate sheets ('mail' and 'web'). With csv and multiple measurements, two separate output files will be produced for the mail and web results.
 
 If you don't want the measurements combined into a single database or file, add the -i flag to the command.
 This will process all json files individually to the specified output type, creating output files with the same name as the json input file but with a different extension reflecting the output type.
@@ -151,7 +153,7 @@ This will process all json files individually to the specified output type, crea
 Additional information from the original domain xlsx file can be included by specifying the domain filename and (optionally) the column(s) to include. With no column specified the default of 'type' will be used.
 To process the same results as in the example above, but now including the information from the 'type' and 'name' columns use:
 ```
-./process.py measurements duckdb output -d domains/domains.xlsx -m type,name
+./process.py measurements output.duckdb -d domains/domains.xlsx -m type,name
 ```
 
 Please note that the column names cannot contain spaces and that multiple columns need to be separated by a comma *without spaces* as well.
@@ -164,12 +166,7 @@ Once you have assembled a number of months (or quarters) worth of measurements y
 
 ![Example graph](https://raw.githubusercontent.com/poorting/internet.nl_batch_scripts/master/graphs/Scores-overall.png)
 
-Input data for the graphs is taken from a duckdb database, such as the one created by the commands shown above. The graphs are made using the [bokeh graphics library](https://docs.bokeh.org/en/latest/index.html).
-
-### Dependencies
-Bokeh uses Selenium for creating the resulting graphic files (in PNG and SVG format), so you need to have this installed (it is in requirements.txt) as well as a suitable driver ([*geckodriver*](https://github.com/mozilla/geckodriver/releases) or [*chromedriver*](https://chromedriver.chromium.org/downloads)). 
-
-**NB: Note that the drivers must be the same version as the browser you are using!**
+Input data for the graphs is taken from a duckdb database, such as the one created by the commands shown above. The graphs are made with [matplotlib](https://matplotlib.org/).
 
 ### Creating the graphs
 With the data present in the duckdb file, `graphs.py` will produce the graphs in the specified output directory:
@@ -184,7 +181,7 @@ To produce graphs for the previous six months:
 ./graphs.py output.duckdb graphs 6
 ```
 
-To produce graphs for the last N quarters instead of the last N months, add the -q flag:
+To produce graphs for the last N quarters instead of the last N months, add the --quarters or -q flag:
 ```
 ./graphs.py output.duckdb graphs 6 -q
 ```
@@ -200,8 +197,8 @@ The graphs produced are:
 * Bar graph of only the latest scores for web/mail for every distinct *type* in the data (e.g. 'Uni','Research') **if** *type* data is available. 
 * Detailed tables overall, one for mail, one for web.
 * Detailed tables (both web and mail) for every distinct *type* in the data (e.g. 'Uni','Research') **if** *type* data is available.
-* Top 5 'improvers' overall, for both web and mail
-* Bottom 5 'improvers', for both web and mail
+* Top 5 'improvers' overall, for both web and mail. That is: the domains that improved most compared to the previous period (month or quarter)
+* Bottom 5 'improvers' (usually meaning: the 5 domains that deteriorated the most compared to previous period), for both web and mail
 * Top 0 (==all) 'improvers' overall, for both web and mail
 
 Graphs taking *type* into account are of course only made if such data is available in the database. That is: you added it in the process step as shown above. 
@@ -227,7 +224,7 @@ Improvement (or deterioration) is determined by comparing the latest scores with
 The number between brackets after the domain names is the difference in the total score for that domain (2021Q2) compared to the previous period (2021Q1). 
 
 Green squares mean a 'pass' for a topic (e.g. IPv6), red squares denote a 'fail'. A lighter colour square means it changed compared to the previous period. So a light green square denotes a 'pass' where the previous period it was a 'fail' (DNSSEC for the first domain in the left example).
-Similarly, a light red square means a 'fail' where the previous period it was a 'pass' (DKIM for the first domain in the right example).
+Similarly, a light red square means a 'fail' where the previous period it was a 'pass' (DKIM for the first three domains in the right example).
 
 In essence: light green squares are improvements, light red squares are deteriorations.
 
