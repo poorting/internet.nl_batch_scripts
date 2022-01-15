@@ -13,7 +13,7 @@ See the [internet.nl](https://internet.nl) website and/or its [source code on gi
     + [Get credentials](#get-credentials)
     + [Setting up the basics](#setting-up-the-basics)
       + [The domains to test](#The-domains-to-test)
-      + [Python packages/dependencies](#Python-packages/dependencies)
+      + [Python dependencies](#Python-dependencies)
   * [Using the helper scripts](#using-the-helper-scripts)
     + [Calling the API](#calling-the-api)
     + [Submitting a measurement request](#submitting-a-measurement-request)
@@ -57,7 +57,7 @@ You have to prepare an .xlsx file to contain the domains you want to batch test.
 
 Each line can contain 4 fields: The name, the domain to be used for a web test, the domain to be used for a mail test, and a 'sector/type' field that is used to distinguish between various domains. This can be useful to group domains, for example per department responsible or the type of organisation, and is also used to produce different graphs.
 
-#### Python packages/dependencies
+#### Python dependencies
 All the requirements are in requirements.txt. 
 As always, it's best to create a separate virtual environment for this. Executing the following commands creates a new virtual environment and installs all python packages required:
 ```
