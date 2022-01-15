@@ -12,6 +12,8 @@ See the [internet.nl](https://internet.nl) website and/or its [source code on gi
   * [Getting started](#getting-started)
     + [Get credentials](#get-credentials)
     + [Setting up the basics](#setting-up-the-basics)
+      + [The domains to test](#The-domains-to-test)
+      + [Python packages/dependencies](#Python-packages/dependencies)
   * [Using the helper scripts](#using-the-helper-scripts)
     + [Calling the API](#calling-the-api)
     + [Submitting a measurement request](#submitting-a-measurement-request)
@@ -50,9 +52,29 @@ password = <your_account_password>
 The batch.py script will use this information to authenticate to the API.
 
 ### Setting up the basics
+#### The domains to test
 You have to prepare an .xlsx file to contain the domains you want to batch test. The easiest approach is to simply modify the provided example domains/domains.xlsx file.
 
 Each line can contain 4 fields: The name, the domain to be used for a web test, the domain to be used for a mail test, and a 'sector/type' field that is used to distinguish between various domains. This can be useful to group domains, for example per department responsible or the type of organisation, and is also used to produce different graphs.
+
+#### Python packages/dependencies
+All the requirements are in requirements.txt. 
+As always, it's best to create a separate virtual environment for this. Executing the following commands creates a new virtual environment and installs all python packages required:
+```
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+```
+Once you're done either close the terminal or exit the virtual environment by executing `deactivate`
+```
+deactivate
+```
+Next time you need to work with these script, activate the virtual environment again by simply executing 
+```
+source venv/bin/activate
+```
+
+from this base directory.
 
 ## Using the helper scripts
 
