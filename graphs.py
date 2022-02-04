@@ -338,7 +338,7 @@ def createHeatmap(df, title='',incsign=False):
     myColors = ((1.0, 0.0, 0.0, 1.0), (0.75, 0.0, 0.0, 1.0), (0.0, 0.65, 0.0, 1.0), (0.0, 1.0, 0.0, 1.0))
     my_cmap = LinearSegmentedColormap.from_list('Custom', myColors, len(myColors))
 
-    plt.figure(figsize=(7, len(df)/2 + 1.75))
+    plt.figure(figsize=(2+len(df.columns)/2, len(df)/2 + 1.75))
     plt.title(title, fontsize='large')
 
     # plot a heatmap with custom grid lines
