@@ -42,13 +42,14 @@ The scripts in this repository enable you to submit domains from an Excel (.xlsx
 ### Get credentials
 The first and foremost step is to nicely ask vraag@internet.nl or question@internet.nl to be granted access to the Batch API.
 
-Once you have received the account details add the account information to the batch.conf file like so:
+Once you have received the account details add the account information to a batch.conf file like so:
 
 ```
 [prod]
 username = <your_account_name>
 password = <your_account_password>
 ```
+You can rename or copy the provided batch.conf.example file to batch.conf and modify that.
 The batch.py script will use this information to authenticate to the API.
 
 ### Setting up the basics
