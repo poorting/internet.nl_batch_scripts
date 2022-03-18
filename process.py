@@ -321,13 +321,13 @@ def main():
 
             if args.filetype == 'csv':
                 print("Creating {}.csv".format(outputfile))
-                file = open("{}.csv".format(outputfile), 'w')
+                file = open("{}.csv".format(outputfile), 'w', encoding='utf-8')
                 print(csv, file=file)
                 file.close()
             elif args.filetype == 'xlsx':
                 print("Creating {}.xlsx file".format(outputfile))
                 tmpfile, tmpfilename = tempfile.mkstemp()
-                with open(tmpfile, 'w') as f:
+                with open(tmpfile, 'w', encoding='utf-8') as f:
                     print(csv, file=f)
                 df = pd.read_csv(tmpfilename)
                 df.sort_values(by=['submit_date', 'score', 'domain'], ascending=False, inplace=True)
@@ -342,7 +342,7 @@ def main():
                 con = duckdb.connect(database=duckdb_file, read_only=False)
                 print("creating table {}".format(mt))
                 tmpfile, tmpfilename = tempfile.mkstemp()
-                with open(tmpfile, 'w') as f:
+                with open(tmpfile, 'w', encoding='utf-8') as f:
                     print(csv, file=f)
 
                 logger.info("CREATE TABLE {} AS SELECT * FROM read_csv_auto('{}')".format(mt, tmpfilename))
@@ -378,7 +378,7 @@ def main():
             for mt in ['web', 'mail']:
                 if len(csvs[mt]) > 0:
                     print("\tcreating to {}-{}.csv".format(outputfile, mt))
-                    file = open("{}-{}.csv".format(outputfile, mt), 'w')
+                    file = open("{}-{}.csv".format(outputfile, mt), 'w', encoding='utf-8')
                     print(csvs[mt][0], file=file)
                     file.close()
         elif args.filetype == 'xlsx':
@@ -387,7 +387,7 @@ def main():
                 for mt in ['web', 'mail']:
                     if len(csvs[mt]) > 0:
                         tmpfile, tmpfilename = tempfile.mkstemp()
-                        with open(tmpfile, 'w') as f:
+                        with open(tmpfile, 'w', encoding='utf-8') as f:
                             print(csvs[mt][0], file=f)
                         df = pd.read_csv(tmpfilename)
                         df.sort_values(by=['submit_date', 'score', 'domain'], ascending=False, inplace=True)
@@ -405,7 +405,7 @@ def main():
                 if len(csvs[mt]) > 0:
                     print("\tcreating table {}".format(mt))
                     tmpfile, tmpfilename = tempfile.mkstemp()
-                    with open(tmpfile, 'w') as f:
+                    with open(tmpfile, 'w', encoding='utf-8') as f:
                         print(csvs[mt][0], file=f)
                     logger.info("CREATE TABLE {} AS SELECT * FROM read_csv_auto('{}')".format(mt, tmpfilename))
                     con.execute("CREATE TABLE {} AS SELECT * FROM read_csv_auto('{}')".format(mt, tmpfilename))
