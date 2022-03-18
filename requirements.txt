@@ -12,7 +12,7 @@ charset-normalizer==2.0.4
     # via requests
 cycler==0.10.0
     # via matplotlib
-duckdb==0.2.8
+duckdb==0.3.2
     # via -r requirements.in
 et-xmlfile==1.1.0
     # via openpyxl
