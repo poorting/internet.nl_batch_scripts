@@ -801,7 +801,13 @@ def get_Context(con, args):
 
     q_str = "DESCRIBE {}".format(context['tables'][0])
     arr = con.execute(q_str).fetchnumpy()
-    cols = list(arr['Field'])
+
+    if 'Field' in arr:
+        # Used in earlier versions of duckdb (<0.4?)
+        cols = list(arr['Field'])
+    else:
+        # Used in newer version of duckdb (>=0.4?)
+        cols = list(arr['column_name'])
     if "md_{}".format(args.m) in cols:
         context['type'] = args.m
         q_str = "select distinct(md_{0}) as type from {1} where md_{0}!='<unknown>' order by md_{0} desc".format(
