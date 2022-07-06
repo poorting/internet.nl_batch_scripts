@@ -55,14 +55,15 @@ qry_items_score = {
            'round(avg(web_dnssec*100)) AS "DNSSEC (web)", round(avg(web_https*100)) AS "TLS" ',
     'mail': ' round(avg(score)) as "score(mail)", round(avg(mail_ipv6*100)) AS "IPv6 (mail)", '
             'round(avg(mail_dnssec*100)) AS "DNSSEC (mail)", round(avg(mail_starttls_tls_available*100)) AS "STARTTLS",'
-            'round(avg(mail_auth_spf_policy*100)) as "SPF", round(avg(mail_auth_dkim_exist*100)) AS "DKIM", '
-            'round(avg(mail_auth_dmarc_policy*100)) AS "DMARC" ',
+            'round(avg(mail_starttls_dane_valid*100)) as "DANE", round(avg(mail_auth_spf_policy*100)) as "SPF",'
+            'round(avg(mail_auth_dkim_exist*100)) AS "DKIM", round(avg(mail_auth_dmarc_policy*100)) AS "DMARC" ',
 }
 
 qry_items_detail = {
     'web': ' domain, score, web_ipv6 as "IPv6", web_dnssec AS "DNSSEC", web_https AS "TLS" ',
     'mail': ' domain, score, mail_ipv6 AS "IPv6", mail_dnssec AS "DNSSEC", mail_starttls_tls_available AS "STARTTLS",'
-            'mail_auth_spf_policy as "SPF", mail_auth_dkim_exist AS "DKIM", mail_auth_dmarc_policy AS "DMARC" ',
+            'mail_starttls_dane_valid as "DANE", mail_auth_spf_policy as "SPF", mail_auth_dkim_exist AS "DKIM",'
+            'mail_auth_dmarc_policy AS "DMARC" ',
 }
 
 ###############################################################################
