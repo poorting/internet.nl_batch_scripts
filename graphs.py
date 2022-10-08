@@ -91,7 +91,28 @@ def parser_add_arguments():
     parser = ArgumentParser(
         prog=program_name,
         description=textwrap.dedent('''\
-                        Description goes here
+                        Utility for creating graphs of internet.nl measurements.
+                        Assuming multiple measurements (months/quarters) are present
+                        and multiple types (of organisations) are specified, 
+                        then the following graphs are created:
+                        
+                          * bar graphs and spider plots of:
+                            - overall scores of the latest measurement
+                            - overall score of latest measurement per type
+                            - the latest measurement for every type
+                          * heatmap (matrix) graphs with green (pass) or red (fail):
+                            - for all domains in one graph (ordered by score)
+                            - all domains of a type in separate graphs (ordered by score)
+                          * delta heatmap of all domains, showing change since previous
+                            measurement (month or quarter), ordered by magnitude of change.
+                            - light green: better than last measurement (fail --> pass)
+                            - green      : same as last measurement     (pass --> pass)
+                            - red        : same as last measurement     (fail --> fail)
+                            - light red  : worse than last measurement  (pass --> fail)
+                          * delta heatmap of 'top 3' (best improvers) for web and for mail
+                          * delta heatmap of 'bottom 3' for web and for mail
+                            - May contain more than 3 domains if more domains are 
+                              equally placed for the 3rd spot.
                         '''),
         epilog=textwrap.dedent('''\
                         Example: ./%(prog)s -q -n 3 DB.duckdb
