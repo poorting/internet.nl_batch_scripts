@@ -9,6 +9,8 @@ import logging
 import tempfile
 
 import duckdb
+import sqlite3
+import csv_to_sqlite
 import pandas as pd
 import pprint
 
@@ -103,7 +105,7 @@ def parser_add_arguments():
     parser.add_argument("outputfile",
                         help=textwrap.dedent('''\
                         filename (with extension) to store the results in. The extension defines the 
-                        type of file. Supported formats are duckdb, csv or xlsx.
+                        type of file. Supported formats are duckdb, sqlite, csv or xlsx.
                         '''),
                         )
 
@@ -281,8 +283,8 @@ def main():
         exit(1)
 
     args.filetype = args.outputfile.split('.')[-1].lower()
-    if args.filetype not in ['xlsx','csv','duckdb']:
-        logger.error("Only xlsx, csv or duckdb formats are supported")
+    if args.filetype not in ['xlsx','csv','duckdb', 'sqlite']:
+        logger.error("Only xlsx, csv, duckdb or sqlite formats are supported")
         parser.print_help(sys.stderr)
         exit(1)
     outputfile = ".".join(args.outputfile.split('.')[:-1])
@@ -409,10 +411,35 @@ def main():
                         print(csvs[mt][0], file=f)
                     logger.info("CREATE TABLE {} AS SELECT * FROM read_csv_auto('{}')".format(mt, tmpfilename))
                     con.execute("CREATE TABLE {} AS SELECT * FROM read_csv_auto('{}')".format(mt, tmpfilename))
-
             if args.e:
                 con.execute("EXPORT DATABASE '{}.d' (FORMAT CSV, DELIMITER '|')".format(duckdb_file))
             con.close()
+
+        elif args.filetype == 'sqlite':
+            sqlite_file = "{}.sqlite".format(outputfile)
+            if os.path.isfile(sqlite_file):
+                print("Removing {}".format(sqlite_file))
+                os.remove(sqlite_file)
+            print("Creating {} file".format(sqlite_file))
+            options = csv_to_sqlite.CsvOptions(typing_style="full", bracket_style="none")
+            table_dict = {}
+            for mt in ['web', 'mail']:
+                if len(csvs[mt]) > 0:
+                    print("\tcreating table {}".format(mt))
+                    tmpfile, tmpfilename = tempfile.mkstemp()
+                    with open(tmpfile, 'w', encoding='utf-8') as f:
+                        print(csvs[mt][0], file=f)
+                        logger.info(f"Reading {mt} table from temp file {tmpfilename}")
+                    csv_to_sqlite.write_csv([tmpfilename], sqlite_file, options)
+                    table_dict[mt] = os.path.basename(tmpfilename)
+
+            for tabtype, tabname in table_dict.items():
+                con = sqlite3.connect(sqlite_file)
+                cur = con.cursor()
+                logger.info(f"Renaming table {tabname} to {tabtype}")
+                cur.execute(f"ALTER TABLE {tabname} RENAME TO {tabtype}")
+                con.commit()
+                con.close()
 
 
 if __name__ == '__main__':
