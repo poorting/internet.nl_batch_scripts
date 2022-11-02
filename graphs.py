@@ -66,6 +66,7 @@ qry_items_detail = {
             'mail_auth_dmarc_policy AS "DMARC" ',
 }
 
+
 ###############################################################################
 #
 class ArgumentParser(argparse.ArgumentParser):
@@ -273,15 +274,15 @@ def createBarGraph(df, title=' ', y_label='score/percentage', label_suffix='', p
     my_cmap = LinearSegmentedColormap.from_list('Custom', palette, segments)
 
     # if (df.columns)
-    plt.figure(figsize=(3 + (len(df.columns)*len(df))/5.5, 8))
+    plt.figure(figsize=(3 + (len(df.columns) * len(df)) / 5.5, 8))
     ax = plt.subplot()
     ax.set_title(title, fontname=_graph_font, fontsize='large', y=1.05)
-    ax.set_ylabel('score/percentage',  fontname=_graph_font, fontsize='medium', loc='center')
-    ax.set_xlabel('category',  fontname=_graph_font, fontsize='medium', loc='center', labelpad=15.0)
+    ax.set_ylabel('score/percentage', fontname=_graph_font, fontsize='medium', loc='center')
+    ax.set_xlabel('category', fontname=_graph_font, fontsize='medium', loc='center', labelpad=15.0)
     ax.spines['bottom'].set_linewidth(0.5)
     ax.spines['left'].set_linewidth(0.5)
 
-    ax.set_ylim(0,100)
+    ax.set_ylim(0, 100)
     loc = matplotlib.ticker.MultipleLocator(base=10)
     ax.yaxis.set_major_locator(loc)
     ax.yaxis.set_minor_locator(matplotlib.ticker.MultipleLocator(2))
@@ -289,46 +290,46 @@ def createBarGraph(df, title=' ', y_label='score/percentage', label_suffix='', p
     plt.tick_params(axis='y', which='major', width=0.5, labelsize='small')
     plt.grid(which='major', axis='y', linestyle='dotted', linewidth=0.5, color='black', alpha=0.3)
 
-    ax.xaxis.set_minor_locator(matplotlib.ticker.MultipleLocator(len(periods)+1))
-    ax.xaxis.set_major_locator(matplotlib.ticker.MultipleLocator(len(periods)+cat_gap))
-    plt.tick_params(axis='x', which='minor', direction='out', length=0, width=0.5, rotation=90, labelsize='x-small' )
-    plt.tick_params(axis='x', which='major', direction='out', length=0, width=0.5, labelsize='small' )
+    ax.xaxis.set_minor_locator(matplotlib.ticker.MultipleLocator(len(periods) + 1))
+    ax.xaxis.set_major_locator(matplotlib.ticker.MultipleLocator(len(periods) + cat_gap))
+    plt.tick_params(axis='x', which='minor', direction='out', length=0, width=0.5, rotation=90, labelsize='x-small')
+    plt.tick_params(axis='x', which='major', direction='out', length=0, width=0.5, labelsize='small')
 
     plt.xticks(fontname=_graph_font)
     plt.yticks(fontname=_graph_font)
 
     for i in range(0, len(periods)):
-        rbars = range(i+1, nr_of_bars+cat_gap*len(categories)+1, len(periods)+cat_gap)
+        rbars = range(i + 1, nr_of_bars + cat_gap * len(categories) + 1, len(periods) + cat_gap)
         plt.bar(rbars,
                 df.iloc[i, :].tolist(),
                 width=barWidth,
                 color=my_cmap(i),
-                edgecolor=(1,1,1,1),
+                edgecolor=(1, 1, 1, 1),
                 linewidth=1,
                 label=periods[i],
                 zorder=2,
                 )
         # Plot the values on top
         for j, r in enumerate(rbars):
-            plt.text(x=r-0.2, y=df.iloc[i,j] + 1.5, s=str(int(df.iloc[i,j])),
+            plt.text(x=r - 0.2, y=df.iloc[i, j] + 1.5, s=str(int(df.iloc[i, j])),
                      fontname=_graph_font, fontweight='normal', fontsize='small', rotation='vertical')
 
-    barsx=[]
+    barsx = []
     for i in range(0, len(categories)):
-        barsx.append(i*(len(periods)+cat_gap) + len(periods)/2 + 0.5)
+        barsx.append(i * (len(periods) + cat_gap) + len(periods) / 2 + 0.5)
 
     xticks = categories
     if len(df) > 3:
-        plt.xticks(barsx, xticks, rotation='horizontal',  fontname=_graph_font)
+        plt.xticks(barsx, xticks, rotation='horizontal', fontname=_graph_font)
     else:
-        plt.xticks(barsx, xticks, rotation='vertical',  fontname=_graph_font)
+        plt.xticks(barsx, xticks, rotation='vertical', fontname=_graph_font)
 
     leg = plt.legend(prop={'family': _graph_font}, framealpha=0.5, edgecolor='grey')
     for line in leg.get_lines():
         line.set_linewidth(7)
 
-    barslots = (len(periods)+cat_gap)*len(categories) - cat_gap
-    plt.margins(x = 0.51/barslots  )
+    barslots = (len(periods) + cat_gap) * len(categories) - cat_gap
+    plt.margins(x=0.51 / barslots)
     ax.set_xlim(0, barslots + 1)
 
     plt.tight_layout()
@@ -340,7 +341,6 @@ def createBarGraph(df, title=' ', y_label='score/percentage', label_suffix='', p
 
 # ------------------------------------------------------------------------------
 def createHeatmap(df, title='', incsign=False):
-
     pp = pprint.PrettyPrinter(indent=4)
 
     # De score tabel wordt achter het domein gevoegd (bv 'www.surf.nl (97)'), zodat de inhoud zelf alleen 0/1 (rood/groen) is.
@@ -371,8 +371,8 @@ def createHeatmap(df, title='', incsign=False):
     my_cmap = LinearSegmentedColormap.from_list('Custom', myColors, len(myColors))
 
     dom_longest = len(max(list(df.index.values), key=len))
-    width = dom_longest/10 + len(df.columns)/1.75
-    height = len(df)/1.75 + 1.75
+    width = dom_longest / 10 + len(df.columns) / 1.75
+    height = len(df) / 1.75 + 1.75
 
     plt.figure(figsize=(width, height))
     plt.title(title, fontsize='large')
@@ -393,7 +393,7 @@ def createHeatmap(df, title='', incsign=False):
     ax.set_xlabel('')
     ax.set_aspect('equal')
 
-    plt.tick_params(axis='y', which='major', width=1, length=0, labelsize='medium' )
+    plt.tick_params(axis='y', which='major', width=1, length=0, labelsize='medium')
     plt.tick_params(axis='x', which='major', width=1, length=5, labelsize='medium')
 
     plt.tight_layout()
@@ -403,7 +403,6 @@ def createHeatmap(df, title='', incsign=False):
 
 # ------------------------------------------------------------------------------
 def createSpiderPlot(df, title='', fill=False, palette=paletteSector):
-
     pp = pprint.PrettyPrinter(indent=4)
 
     sns.set_style('dark')
@@ -456,7 +455,7 @@ def createSpiderPlot(df, title='', fill=False, palette=paletteSector):
         rmin = 0
         rmax = len(angles)
     else:
-        rmin = len(angles)-1
+        rmin = len(angles) - 1
         rmax = -1
 
     for label, i in zip(ax.get_xticklabels(), range(rmin, rmax, rstep)):
@@ -500,7 +499,6 @@ def getSectorPalette(types):
 
 # ------------------------------------------------------------------------------
 def scoreLastPeriods(context, db_con):
-
     pp = pprint.PrettyPrinter(indent=4)
 
     ret_dfs = []
@@ -511,21 +509,22 @@ def scoreLastPeriods(context, db_con):
 
     for tbl in context['tables']:
         query = "SELECT max({3}) as {3},{1} from {0} where {2}>=\'{4}\' and {2}<=\'{5}\' group by {2} order by {2} asc".format(
-            tbl, qry_items_score[tbl], context['period_col'], context['period_str_col'], context['start_period'], context['end_period'])
+            tbl, qry_items_score[tbl], context['period_col'], context['period_str_col'], context['start_period'],
+            context['end_period'])
         df_mw.append(db_con.execute(query).fetchdf())
 
     # for df in df_mw:
     #     pp.pprint(df)
 
     df = df_mw[0]
-    if len(df_mw)>1:
+    if len(df_mw) > 1:
         df_mw[1].drop(context['period_str_col'], axis=1, inplace=True)
         df = pd.concat(df_mw, axis=1)
 
     # pp.pprint(df)
 
     title = 'Results overall ({} - {})'.format(context['start_period_str'], context['end_period_str'])
-    filename="{}/Scores-overall".format(context['output_dir'])
+    filename = "{}/Scores-overall".format(context['output_dir'])
     p = createBarGraph(df, title=title, palette=paletteBR)
 
     plt.savefig(filename + '.svg', bbox_inches='tight')
@@ -535,7 +534,6 @@ def scoreLastPeriods(context, db_con):
 
 # ------------------------------------------------------------------------------
 def scoreLastPeriod_type(context, db_con):
-
     pp = pprint.PrettyPrinter(indent=4)
 
     if not context['type']:
@@ -551,7 +549,7 @@ def scoreLastPeriod_type(context, db_con):
         df_mw.append(db_con.execute(query).fetchdf())
 
     df = df_mw[0]
-    if len(df_mw)>1:
+    if len(df_mw) > 1:
         df_mw[1].drop(context['type'], axis=1, inplace=True)
         df = pd.concat(df_mw, axis=1)
 
@@ -580,8 +578,8 @@ def scoreLastPeriod_type(context, db_con):
     # See if we can make individual plots for every type
     # pp.pprint(df)
     for i in range(0, len(df)):
-        df1 = df.iloc[i,:].to_frame().transpose()
-        type = df.iloc[i,0]
+        df1 = df.iloc[i, :].to_frame().transpose()
+        type = df.iloc[i, 0]
         print("\tCreating spider plot ({})".format(type))
         title = "Results for {} ({})".format(type, context['end_period_str'])
         pal_type = ('#808080', paletteSector[i % len(paletteSector)])
@@ -594,7 +592,6 @@ def scoreLastPeriod_type(context, db_con):
 
 # ------------------------------------------------------------------------------
 def detailLastPeriod(context, db_con):
-
     pp = pprint.PrettyPrinter(indent=4)
 
     ret_dfs = []
@@ -605,7 +602,7 @@ def detailLastPeriod(context, db_con):
 
     for tbl in context['tables']:
         query = "SELECT {1} from {0} where {2}=\'{3}\' order by score desc, domain asc".format(
-                tbl, qry_items_detail[tbl], context['period_col'], context['end_period'])
+            tbl, qry_items_detail[tbl], context['period_col'], context['end_period'])
         df = db_con.execute(query).fetchdf()
 
         title = 'Details {} ({})'.format(tbl, context['end_period_str'])
@@ -619,7 +616,6 @@ def detailLastPeriod(context, db_con):
 
 # ------------------------------------------------------------------------------
 def deltaToPrevious(context, db_con):
-
     pp = pprint.PrettyPrinter(indent=4)
 
     ret_dfs = []
@@ -630,11 +626,11 @@ def deltaToPrevious(context, db_con):
 
     for tbl in context['tables']:
         query = "SELECT {1} from {0} where {2}=\'{3}\' order by domain asc".format(
-                tbl, qry_items_detail[tbl], context['period_col'], context['prev_period'])
+            tbl, qry_items_detail[tbl], context['period_col'], context['prev_period'])
         df1 = db_con.execute(query).fetchdf()
 
         query = "SELECT {1} from {0} where {2}=\'{3}\' order by domain asc".format(
-                tbl, qry_items_detail[tbl], context['period_col'], context['end_period'])
+            tbl, qry_items_detail[tbl], context['period_col'], context['end_period'])
         df2 = db_con.execute(query).fetchdf()
 
         # Multiply everything but the score by 2 for the latest one
@@ -665,19 +661,19 @@ def deltaToPrevious(context, db_con):
         # Find the top/bottom 3 and then extend with all rows with the same improvement/deterioration as the number 3
         # (otherwise nr. 4 may have same improvement as nr. 3, but be excluded on grounds of alphabetical ordering)
         top = 2  # first row is 0
-        if df.iloc[top,0] > 0:
-            while df.iloc[top, 0] == df.iloc[top+1,0]:
+        if df.iloc[top, 0] > 0:
+            while df.iloc[top, 0] == df.iloc[top + 1, 0]:
                 top += 1
 
-        bot = -3 # last row is -1
+        bot = -3  # last row is -1
         if df.iloc[bot, 0] < 0:
-            while df.iloc[bot, 0] == df.iloc[bot-1,0]:
+            while df.iloc[bot, 0] == df.iloc[bot - 1, 0]:
                 bot -= 1
 
         # Make domains a column again (otherwise Heatmap will fail)
         df.reset_index(level=0, inplace=True)
 
-        dfTop = df.head(top+1).copy()
+        dfTop = df.head(top + 1).copy()
         dfBot = df.tail(abs(bot)).copy()
 
         print("\tDelta for all ({}, {} - {})".format(tbl, context['prev_period_str'], context['end_period_str']))
@@ -688,17 +684,20 @@ def deltaToPrevious(context, db_con):
         plt.savefig('{}/Delta-all-{}.png'.format(context['output_dir'], tbl), bbox_inches='tight')
         plt.savefig('{}/Delta-all-{}.svg'.format(context['output_dir'], tbl), bbox_inches='tight')
 
-        print("\tTop {} ({}, {} - {})".format(len(dfTop),tbl, context['prev_period_str'], context['end_period_str']))
+        print("\tTop {} ({}, {} - {})".format(len(dfTop), tbl, context['prev_period_str'], context['end_period_str']))
         p = createHeatmap(
             dfTop,
-            title="Top {0} ({1}, {2} - {3})".format(len(dfTop), tbl, context['prev_period_str'], context['end_period_str']), incsign=True)
+            title="Top {0} ({1}, {2} - {3})".format(len(dfTop), tbl, context['prev_period_str'],
+                                                    context['end_period_str']), incsign=True)
         plt.savefig('{}/Delta-all-top-{}.png'.format(context['output_dir'], tbl), bbox_inches='tight')
         plt.savefig('{}/Delta-all-top-{}.svg'.format(context['output_dir'], tbl), bbox_inches='tight')
 
-        print("\tBottom {} ({}, {} - {})".format(len(dfBot), tbl, context['prev_period_str'], context['end_period_str']))
+        print(
+            "\tBottom {} ({}, {} - {})".format(len(dfBot), tbl, context['prev_period_str'], context['end_period_str']))
         p = createHeatmap(
             dfBot,
-            title="Bottom {0} ({1}, {2} - {3})".format(len(dfBot), tbl, context['prev_period_str'], context['end_period_str']), incsign=True)
+            title="Bottom {0} ({1}, {2} - {3})".format(len(dfBot), tbl, context['prev_period_str'],
+                                                       context['end_period_str']), incsign=True)
         plt.savefig('{}/Delta-all-bottom-{}.png'.format(context['output_dir'], tbl), bbox_inches='tight')
         plt.savefig('{}/Delta-all-bottom-{}.svg'.format(context['output_dir'], tbl), bbox_inches='tight')
 
@@ -707,7 +706,6 @@ def deltaToPrevious(context, db_con):
 
 # ------------------------------------------------------------------------------
 def deltaToPrevious_type(context, db_con):
-
     pp = pprint.PrettyPrinter(indent=4)
 
     if not context['type']:
@@ -725,13 +723,13 @@ def deltaToPrevious_type(context, db_con):
 
         for tbl in context['tables']:
             query = "SELECT {1} from {0} where {2}=\'{3}\' and md_{4}='{5}' order by domain asc".format(
-                    tbl, qry_items_detail[tbl], context['period_col'], context['prev_period'],
-                    context['type'], metadata)
+                tbl, qry_items_detail[tbl], context['period_col'], context['prev_period'],
+                context['type'], metadata)
             df1 = db_con.execute(query).fetchdf()
 
             query = "SELECT {1} from {0} where {2}=\'{3}\' and md_{4}='{5}'order by domain asc".format(
-                    tbl, qry_items_detail[tbl], context['period_col'], context['end_period'],
-                    context['type'], metadata)
+                tbl, qry_items_detail[tbl], context['period_col'], context['end_period'],
+                context['type'], metadata)
             df2 = db_con.execute(query).fetchdf()
 
             # Multiply everything but the score by 2 for the latest one
@@ -777,10 +775,12 @@ def deltaToPrevious_type(context, db_con):
             # dfTop = df.head(top+1).copy()
             # dfBot = df.tail(abs(bot)).copy()
 
-            print("\tDelta for {} ({}, {} - {})".format(metadata, tbl, context['prev_period_str'], context['end_period_str']))
+            print("\tDelta for {} ({}, {} - {})".format(metadata, tbl, context['prev_period_str'],
+                                                        context['end_period_str']))
             p = createHeatmap(
                 df,
-                title='Delta for {3} ({0}, {1} - {2})'.format(tbl, context['prev_period_str'], context['end_period_str'], metadata),
+                title='Delta for {3} ({0}, {1} - {2})'.format(tbl, context['prev_period_str'],
+                                                              context['end_period_str'], metadata),
                 incsign=True)
             plt.savefig('{}/Delta-{}-{}.png'.format(context['output_dir'], metadata, tbl), bbox_inches='tight')
             plt.savefig('{}/Delta-{}-{}.svg'.format(context['output_dir'], metadata, tbl), bbox_inches='tight')
@@ -803,7 +803,6 @@ def deltaToPrevious_type(context, db_con):
 
 # ------------------------------------------------------------------------------
 def scoreLastPeriods_type(context, db_con):
-
     pp = pprint.PrettyPrinter(indent=4)
 
     if not context['type']:
@@ -812,17 +811,20 @@ def scoreLastPeriods_type(context, db_con):
     ret_dfs = []
 
     for i, metadata in enumerate(context['type_vals']):
-        print("Score latest periods for {} = {} ({} - {})".format(context['type'], metadata, context['start_period_str'], context['end_period_str']))
+        print(
+            "Score latest periods for {} = {} ({} - {})".format(context['type'], metadata, context['start_period_str'],
+                                                                context['end_period_str']))
         df_mw = []
 
         for tbl in context['tables']:
             query = 'SELECT max({3}) as {3},{1} from {0} where {2}>=\'{4}\' and {2}<=\'{5}\' and md_{6}=\'{7}\' group by {2} order by {2} asc'.format(
-                tbl, qry_items_score[tbl], context['period_col'], context['period_str_col'], context['start_period'], context['end_period'],
+                tbl, qry_items_score[tbl], context['period_col'], context['period_str_col'], context['start_period'],
+                context['end_period'],
                 context['type'], metadata)
             df_mw.append(db_con.execute(query).fetchdf())
 
         df = df_mw[0]
-        if len(df_mw)>1:
+        if len(df_mw) > 1:
             df_mw[1].drop(context['period_str_col'], axis=1, inplace=True)
             df = pd.concat(df_mw, axis=1)
 
@@ -842,7 +844,6 @@ def scoreLastPeriods_type(context, db_con):
 
 # ------------------------------------------------------------------------------
 def detailLastPeriod_type(context, db_con):
-
     pp = pprint.PrettyPrinter(indent=4)
 
     if not context['type']:
@@ -853,16 +854,16 @@ def detailLastPeriod_type(context, db_con):
 
         for tbl in context['tables']:
             query = "SELECT {1} from {0} where {2}=\'{3}\' and md_{4}='{5}' order by score desc, domain asc".format(
-                    tbl, qry_items_detail[tbl], context['period_col'], context['end_period'],
-                    context['type'], metadata)
+                tbl, qry_items_detail[tbl], context['period_col'], context['end_period'],
+                context['type'], metadata)
             df = db_con.execute(query).fetchdf()
 
             title = 'Details {} ({}, {})'.format(tbl, metadata, context['end_period_str'])
             filename = "{}/Details-{}-{}".format(context['output_dir'], metadata, tbl)
             p = createHeatmap(df, title=title)
 
-            plt.savefig(filename+'.png', bbox_inches='tight')
-            plt.savefig(filename+'.svg', bbox_inches='tight')
+            plt.savefig(filename + '.png', bbox_inches='tight')
+            plt.savefig(filename + '.svg', bbox_inches='tight')
 
 
 # ------------------------------------------------------------------------------
@@ -956,6 +957,9 @@ def get_Context(con, args):
             context['type'], context['tables'][0])
         arr = con.execute(q_str).fetchnumpy()
         context['type_vals'] = list(arr['type'])
+        if len(context['type_vals']) < 2:
+            print("Only one value found for '{0}', Not creating graphs based on '{0}'".format(args.m))
+            context['type'] = None
     else:
         print("No metadata '{0}' found. Not creating graphs based on '{0}'.".format(args.m))
 
