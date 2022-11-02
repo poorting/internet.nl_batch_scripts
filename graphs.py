@@ -117,7 +117,8 @@ def parser_add_arguments():
         epilog=textwrap.dedent('''\
                         Example: ./%(prog)s -q -n 3 DB.duckdb
                         
-                        Creates graphs of the latest 3 quarters present in the data from DB.duckdb'''),
+                        Creates graphs of the latest 3 quarters present in the data from DB.duckdb
+                        '''),
         formatter_class=RawTextHelpFormatter,
     )
 
@@ -134,6 +135,13 @@ def parser_add_arguments():
     parser.add_argument("-q", "--quarters",
                         help=textwrap.dedent('''\
                         create graphs of the last [N] quarters instead of
+                        the (default) last [N] months
+                             '''),
+                        action="store_true")
+
+    parser.add_argument("-r", "--rawdates",
+                        help=textwrap.dedent('''\
+                        create graphs of the last [N] measurements instead of
                         the (default) last [N] months
                              '''),
                         action="store_true")
@@ -253,6 +261,8 @@ def createBarGraph(df, title=' ', y_label='score/percentage', label_suffix='', p
     # print("Categories ({}): {}".format(len(categories), categories))
 
     periods = list(df.index.values)
+    if isinstance(df.index, pd.DatetimeIndex):
+        periods = [str(prd)[:10] for prd in df.index.values]
     # print("Periods ({}): {}".format(len(periods), periods))
 
     nr_of_bars = len(periods) * len(categories)
@@ -329,7 +339,7 @@ def createBarGraph(df, title=' ', y_label='score/percentage', label_suffix='', p
 
 
 # ------------------------------------------------------------------------------
-def createHeatmap(df, title='',incsign=False):
+def createHeatmap(df, title='', incsign=False):
 
     pp = pprint.PrettyPrinter(indent=4)
 
@@ -360,7 +370,11 @@ def createHeatmap(df, title='',incsign=False):
     myColors = ((1.0, 0.0, 0.0, 1.0), (0.75, 0.0, 0.0, 1.0), (0.0, 0.65, 0.0, 1.0), (0.0, 1.0, 0.0, 1.0))
     my_cmap = LinearSegmentedColormap.from_list('Custom', myColors, len(myColors))
 
-    plt.figure(figsize=(2+len(df.columns)/2, len(df)/2 + 1.75))
+    dom_longest = len(max(list(df.index.values), key=len))
+    width = dom_longest/10 + len(df.columns)/1.75
+    height = len(df)/1.75 + 1.75
+
+    plt.figure(figsize=(width, height))
     plt.title(title, fontsize='large')
 
     # plot a heatmap with custom grid lines
@@ -491,12 +505,12 @@ def scoreLastPeriods(context, db_con):
 
     ret_dfs = []
 
-    print("Score last periods overall ({}-{})".format(context['start_period_str'], context['end_period_str']))
+    print("Score latest periods overall ({} - {})".format(context['start_period_str'], context['end_period_str']))
 
     df_mw = []
 
     for tbl in context['tables']:
-        query = "SELECT max({3}) as {3},{1} from {0} where {2}>={4} and {2}<={5} group by {2} order by {2} asc".format(
+        query = "SELECT max({3}) as {3},{1} from {0} where {2}>=\'{4}\' and {2}<=\'{5}\' group by {2} order by {2} asc".format(
             tbl, qry_items_score[tbl], context['period_col'], context['period_str_col'], context['start_period'], context['end_period'])
         df_mw.append(db_con.execute(query).fetchdf())
 
@@ -510,7 +524,7 @@ def scoreLastPeriods(context, db_con):
 
     # pp.pprint(df)
 
-    title = 'Results overall ({}-{})'.format(context['start_period_str'], context['end_period_str'])
+    title = 'Results overall ({} - {})'.format(context['start_period_str'], context['end_period_str'])
     filename="{}/Scores-overall".format(context['output_dir'])
     p = createBarGraph(df, title=title, palette=paletteBR)
 
@@ -527,12 +541,12 @@ def scoreLastPeriod_type(context, db_con):
     if not context['type']:
         return []
 
-    print("Score last period per value of {} ({})".format(context['type'], context['end_period_str']))
+    print("Score latest period per value of {} ({})".format(context['type'], context['end_period_str']))
 
     df_mw = []
 
     for tbl in context['tables']:
-        query = "SELECT max(md_{4}) as '{4}', {1} from {0} where {2}=={3} and md_{4}!='<unknown>' group by md_{4} order by md_{4} desc".format(
+        query = "SELECT max(md_{4}) as '{4}', {1} from {0} where {2}==\'{3}\' and md_{4}!='<unknown>' group by md_{4} order by md_{4} desc".format(
             tbl, qry_items_score[tbl], context['period_col'], context['end_period'], context['type'])
         df_mw.append(db_con.execute(query).fetchdf())
 
@@ -585,12 +599,12 @@ def detailLastPeriod(context, db_con):
 
     ret_dfs = []
 
-    print("Details last periods overall ({})".format(context['end_period_str']))
+    print("Details latest period overall ({})".format(context['end_period_str']))
 
     df_mw = []
 
     for tbl in context['tables']:
-        query = "SELECT {1} from {0} where {2}={3} order by score desc, domain asc".format(
+        query = "SELECT {1} from {0} where {2}=\'{3}\' order by score desc, domain asc".format(
                 tbl, qry_items_detail[tbl], context['period_col'], context['end_period'])
         df = db_con.execute(query).fetchdf()
 
@@ -610,16 +624,16 @@ def deltaToPrevious(context, db_con):
 
     ret_dfs = []
 
-    print("Delta compared to previous period ({}-{})".format(context['prev_period_str'], context['end_period_str']))
+    print("Delta compared to previous period ({} - {})".format(context['prev_period_str'], context['end_period_str']))
 
     df_mw = []
 
     for tbl in context['tables']:
-        query = "SELECT {1} from {0} where {2}={3} order by domain asc".format(
+        query = "SELECT {1} from {0} where {2}=\'{3}\' order by domain asc".format(
                 tbl, qry_items_detail[tbl], context['period_col'], context['prev_period'])
         df1 = db_con.execute(query).fetchdf()
 
-        query = "SELECT {1} from {0} where {2}={3} order by domain asc".format(
+        query = "SELECT {1} from {0} where {2}=\'{3}\' order by domain asc".format(
                 tbl, qry_items_detail[tbl], context['period_col'], context['end_period'])
         df2 = db_con.execute(query).fetchdf()
 
@@ -666,27 +680,125 @@ def deltaToPrevious(context, db_con):
         dfTop = df.head(top+1).copy()
         dfBot = df.tail(abs(bot)).copy()
 
-        print("\tDelta for all ({}, {}-{})".format(tbl, context['prev_period_str'], context['end_period_str']))
+        print("\tDelta for all ({}, {} - {})".format(tbl, context['prev_period_str'], context['end_period_str']))
         p = createHeatmap(
             df,
-            title='Delta ({0}, {1}-{2})'.format(tbl, context['prev_period_str'], context['end_period_str']),
+            title='Delta ({0}, {1} - {2})'.format(tbl, context['prev_period_str'], context['end_period_str']),
             incsign=True)
         plt.savefig('{}/Delta-all-{}.png'.format(context['output_dir'], tbl), bbox_inches='tight')
         plt.savefig('{}/Delta-all-{}.svg'.format(context['output_dir'], tbl), bbox_inches='tight')
 
-        print("\tTop {} ({}, {}-{})".format(len(dfTop),tbl, context['prev_period_str'], context['end_period_str']))
+        print("\tTop {} ({}, {} - {})".format(len(dfTop),tbl, context['prev_period_str'], context['end_period_str']))
         p = createHeatmap(
             dfTop,
-            title="Top {0} ({1}, {2}-{3})".format(len(dfTop), tbl, context['prev_period_str'], context['end_period_str']), incsign=True)
-        plt.savefig('{}/Delta-top-{}.png'.format(context['output_dir'], tbl), bbox_inches='tight')
-        plt.savefig('{}/Delta-top-{}.svg'.format(context['output_dir'], tbl), bbox_inches='tight')
+            title="Top {0} ({1}, {2} - {3})".format(len(dfTop), tbl, context['prev_period_str'], context['end_period_str']), incsign=True)
+        plt.savefig('{}/Delta-all-top-{}.png'.format(context['output_dir'], tbl), bbox_inches='tight')
+        plt.savefig('{}/Delta-all-top-{}.svg'.format(context['output_dir'], tbl), bbox_inches='tight')
 
-        print("\tBottom {} ({}, {}-{})".format(len(dfBot), tbl, context['prev_period_str'], context['end_period_str']))
+        print("\tBottom {} ({}, {} - {})".format(len(dfBot), tbl, context['prev_period_str'], context['end_period_str']))
         p = createHeatmap(
             dfBot,
-            title="Bottom {0} ({1}, {2}-{3})".format(len(dfBot), tbl, context['prev_period_str'], context['end_period_str']), incsign=True)
-        plt.savefig('{}/Delta-bottom-{}.png'.format(context['output_dir'], tbl), bbox_inches='tight')
-        plt.savefig('{}/Delta-bottom-{}.svg'.format(context['output_dir'], tbl), bbox_inches='tight')
+            title="Bottom {0} ({1}, {2} - {3})".format(len(dfBot), tbl, context['prev_period_str'], context['end_period_str']), incsign=True)
+        plt.savefig('{}/Delta-all-bottom-{}.png'.format(context['output_dir'], tbl), bbox_inches='tight')
+        plt.savefig('{}/Delta-all-bottom-{}.svg'.format(context['output_dir'], tbl), bbox_inches='tight')
+
+        plt.close()
+
+
+# ------------------------------------------------------------------------------
+def deltaToPrevious_type(context, db_con):
+
+    pp = pprint.PrettyPrinter(indent=4)
+
+    if not context['type']:
+        return []
+
+    for metadata in context['type_vals']:
+
+        ret_dfs = []
+
+        print("Delta compared to previous period for {} = {} ({} - {})".format(
+            context['type'], metadata,
+            context['prev_period_str'], context['end_period_str']))
+
+        df_mw = []
+
+        for tbl in context['tables']:
+            query = "SELECT {1} from {0} where {2}=\'{3}\' and md_{4}='{5}' order by domain asc".format(
+                    tbl, qry_items_detail[tbl], context['period_col'], context['prev_period'],
+                    context['type'], metadata)
+            df1 = db_con.execute(query).fetchdf()
+
+            query = "SELECT {1} from {0} where {2}=\'{3}\' and md_{4}='{5}'order by domain asc".format(
+                    tbl, qry_items_detail[tbl], context['period_col'], context['end_period'],
+                    context['type'], metadata)
+            df2 = db_con.execute(query).fetchdf()
+
+            # Multiply everything but the score by 2 for the latest one
+            # Then deduct the previous one from that
+            # This will give possible 'passed' values of:
+            #
+            #  prev latest*2    l*2-p   Meaning
+            #   1      0         -1     Worse than previous
+            #   0      0          0     Same as previous (0)
+            #   1      1          1     Same as previous (1)
+            #   0      1          2     Better than previous
+            #
+            # for this to work we have to set the domain as index
+            # (so they will be ignored for the subtraction)
+            df1 = df1.set_index('domain')
+            df2 = df2.set_index('domain')
+            df2 = df2 * 2
+            df2.score = round(df2.score / 2)
+            df2 = df2.astype({"score": int})
+            df = df2.subtract(df1)
+            df['score'].fillna(0, inplace=True)
+            df = df.astype({"score": int})
+
+            # Now sort by score (descending), then domain (ascending)
+            df.sort_values(by=['score', 'domain'], ascending=[False, True], inplace=True)
+
+            # # pp.pprint(df)
+            # # Find the top/bottom 3 and then extend with all rows with the same improvement/deterioration as the number 3
+            # # (otherwise nr. 4 may have same improvement as nr. 3, but be excluded on grounds of alphabetical ordering)
+            # top = 2  # first row is 0
+            # if df.iloc[top,0] > 0:
+            #     while df.iloc[top, 0] == df.iloc[top+1,0]:
+            #         top += 1
+            #
+            # bot = -3 # last row is -1
+            # if df.iloc[bot, 0] < 0:
+            #     while df.iloc[bot, 0] == df.iloc[bot-1,0]:
+            #         bot -= 1
+
+            # Make domains a column again (otherwise Heatmap will fail)
+            df.reset_index(level=0, inplace=True)
+
+            # dfTop = df.head(top+1).copy()
+            # dfBot = df.tail(abs(bot)).copy()
+
+            print("\tDelta for {} ({}, {} - {})".format(metadata, tbl, context['prev_period_str'], context['end_period_str']))
+            p = createHeatmap(
+                df,
+                title='Delta for {3} ({0}, {1} - {2})'.format(tbl, context['prev_period_str'], context['end_period_str'], metadata),
+                incsign=True)
+            plt.savefig('{}/Delta-{}-{}.png'.format(context['output_dir'], metadata, tbl), bbox_inches='tight')
+            plt.savefig('{}/Delta-{}-{}.svg'.format(context['output_dir'], metadata, tbl), bbox_inches='tight')
+            plt.close()
+
+            # print("\tTop {} for {} ({}, {}-{})".format(len(dfTop), metadata, tbl, context['prev_period_str'], context['end_period_str']))
+            # p = createHeatmap(
+            #     dfTop,
+            #     title="Top {0} for {4} ({1}, {2}-{3})".format(len(dfTop), tbl, context['prev_period_str'], context['end_period_str'], metadata), incsign=True)
+            # plt.savefig('{}/Delta-{}-top-{}.png'.format(context['output_dir'], metadata, tbl), bbox_inches='tight')
+            # plt.savefig('{}/Delta-{}-top-{}.svg'.format(context['output_dir'], metadata, tbl), bbox_inches='tight')
+            #
+            # print("\tBottom {} ({}, {}-{})".format(len(dfBot), tbl, context['prev_period_str'], context['end_period_str']))
+            # p = createHeatmap(
+            #     dfBot,
+            #     title="Bottom {0} for {4} ({1}, {2}-{3})".format(len(dfBot), tbl, context['prev_period_str'], context['end_period_str'], metadata), incsign=True)
+            # plt.savefig('{}/Delta-{}-bottom-{}.png'.format(context['output_dir'], metadata, tbl), bbox_inches='tight')
+            # plt.savefig('{}/Delta-{}-bottom-{}.svg'.format(context['output_dir'], metadata, tbl), bbox_inches='tight')
 
 
 # ------------------------------------------------------------------------------
@@ -700,11 +812,11 @@ def scoreLastPeriods_type(context, db_con):
     ret_dfs = []
 
     for i, metadata in enumerate(context['type_vals']):
-        print("Score last periods for {} = {} ({}-{})".format(context['type'], metadata, context['start_period_str'], context['end_period_str']))
+        print("Score latest periods for {} = {} ({} - {})".format(context['type'], metadata, context['start_period_str'], context['end_period_str']))
         df_mw = []
 
         for tbl in context['tables']:
-            query = 'SELECT max({3}) as {3},{1} from {0} where {2}>={4} and {2}<={5} and md_{6}=\'{7}\' group by {2} order by {2} asc'.format(
+            query = 'SELECT max({3}) as {3},{1} from {0} where {2}>=\'{4}\' and {2}<=\'{5}\' and md_{6}=\'{7}\' group by {2} order by {2} asc'.format(
                 tbl, qry_items_score[tbl], context['period_col'], context['period_str_col'], context['start_period'], context['end_period'],
                 context['type'], metadata)
             df_mw.append(db_con.execute(query).fetchdf())
@@ -716,7 +828,7 @@ def scoreLastPeriods_type(context, db_con):
 
         # pp.pprint(df)
 
-        title = 'Results {} ({}-{})'.format(metadata, context['start_period_str'], context['end_period_str'])
+        title = 'Results {} ({} - {})'.format(metadata, context['start_period_str'], context['end_period_str'])
         filename = "{}/Scores-{}".format(context['output_dir'], metadata)
         p = createBarGraph(df, title=title, palette=type_palettes[i % len(type_palettes)])
         plt.savefig(filename + '.svg', bbox_inches='tight')
@@ -737,10 +849,10 @@ def detailLastPeriod_type(context, db_con):
         return []
 
     for metadata in context['type_vals']:
-        print("Details last periods for {} = {} ({})".format(context['type'], metadata, context['end_period_str']))
+        print("Details latest periods for {} = {} ({})".format(context['type'], metadata, context['end_period_str']))
 
         for tbl in context['tables']:
-            query = "SELECT {1} from {0} where {2}={3} and md_{4}='{5}' order by score desc, domain asc".format(
+            query = "SELECT {1} from {0} where {2}=\'{3}\' and md_{4}='{5}' order by score desc, domain asc".format(
                     tbl, qry_items_detail[tbl], context['period_col'], context['end_period'],
                     context['type'], metadata)
             df = db_con.execute(query).fetchdf()
@@ -800,6 +912,14 @@ def get_Context(con, args):
 
     q_str = "SELECT DISTINCT({0}) FROM {1} WHERE {0}>0 ORDER BY {0} DESC".format(
         context['period_col'], context['tables'][0])
+
+    if args.rawdates:
+        context['period_unit'] = 'rawdates'
+        context['period_col'] = 'submit_date'
+        context['period_str_col'] = 'submit_date'
+        q_str = "SELECT DISTINCT({0}) FROM {1} ORDER BY {0} DESC".format(
+            context['period_col'], context['tables'][0])
+
     arr = con.execute(q_str).fetchnumpy()
     periods_present = list(arr[context['period_col']])
 
@@ -886,8 +1006,8 @@ def main():
     con = duckdb.connect(database=database, read_only=True)
 
     context = get_Context(con, args)
-
     # pp.pprint(context)
+
     if not context['end_period']:
         print("No {} found to display!".format(context['period_unit']))
         exit(1)
@@ -896,15 +1016,16 @@ def main():
         print("You cannot specify a file ({}) as an output directory!".format(args.output_dir))
         exit(2)
 
-    scoreLastPeriods(context, con)
-    scoreLastPeriod_type(context, con)
-    scoreLastPeriods_type(context, con)
-
+    # scoreLastPeriods(context, con)
+    # scoreLastPeriod_type(context, con)
+    # scoreLastPeriods_type(context, con)
+    #
     detailLastPeriod(context, con)
     detailLastPeriod_type(context, con)
 
     if context['prev_period']:
         deltaToPrevious(context, con)
+        deltaToPrevious_type(context, con)
 
     con.close()
 

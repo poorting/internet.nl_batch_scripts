@@ -283,7 +283,7 @@ def main():
         exit(1)
 
     args.filetype = args.outputfile.split('.')[-1].lower()
-    if args.filetype not in ['xlsx','csv','duckdb', 'sqlite']:
+    if args.filetype not in ['xlsx', 'csv', 'duckdb', 'sqlite']:
         logger.error("Only xlsx, csv, duckdb or sqlite formats are supported")
         parser.print_help(sys.stderr)
         exit(1)

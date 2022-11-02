@@ -19,7 +19,7 @@ TYPE_UNKNOWN = '<unknown>'
 categories = {
     "mail": ["mail_ipv6", "mail_dnssec", "mail_auth", "mail_starttls"],
     "web": ["web_ipv6", "web_dnssec", "web_https", "web_appsecpriv"],
-             }
+}
 
 specific_tests = {
     "mail": [
@@ -119,7 +119,9 @@ def getCredentials(option=None):
 # ------------------------------------------------------------------------------
 def Nr2Name(q):
     # return '{0}Q{1}'.format(str(q)[:4], str(q)[-1])
-    if len(str(q)) > 5:
+    if len(str(q)) > 6:
+        return _Nr2D(q)
+    elif len(str(q)) > 5:
         return _Nr2M(q)
     else:
         return _Nr2Q(q)
@@ -133,6 +135,11 @@ def _Nr2Q(q):
 # ------------------------------------------------------------------------------
 def _Nr2M(q):
     return '{0}\'{1}'.format(calendar.month_abbr[int(str(q)[-2:])], str(q)[2:4])
+
+
+# ------------------------------------------------------------------------------
+def _Nr2D(q):
+    return str(q)[:10]
 
 
 # ------------------------------------------------------------------------------
@@ -350,7 +357,6 @@ def _JSONtoDF2_0(data, domains_metadata, columns_to_add=[]):
 
 # ------------------------------------------------------------------------------
 def JSONtoCSV(data, domains_metadata, columns_to_add=[]):
-
     api_version = getAPIversion(data)
 
     if api_version == '1.1' or api_version == '1.0':
@@ -382,10 +388,12 @@ def _JSONtoCSV1_1(data, domains_metadata, columns_to_add):
         domains_metadata = domains_metadata.set_index(measurementType, inplace=False)
 
     for domainresults in domains:
-        # line= [{"submit_date": submit_date},]
-        line = [{"submit_date": payload['submission-date']}]
+        # line = [{"submit_datetime": payload['submission-date']}]
         domainname = domainresults['domain']
-        line.append({'domain': domainname})
+        line = [{"submit_datetime": submit_date},
+                {'submit_date': submit_date.strftime('%Y-%m-%d')},
+                {'domain': domainname}
+                ]
 
         quarters = [4, 7, 10, 1]
         if (submit_date.date().month in quarters):
@@ -495,8 +503,10 @@ def _JSONtoCSV2_0(data, domains_metadata, columns_to_add):
 
     for domainname in domains:
         domainresults = domains[domainname]
-        # line= [{"submit_date": submit_date},]
-        line = [{"submit_date": data['request']['submit_date']}, {'domain': domainname}]
+        line = [{"submit_datetime": submit_date},
+                {'submit_date': submit_date.strftime('%Y-%m-%d')},
+                {'domain': domainname}
+                ]
 
         quarters = [4, 7, 10, 1]
         if (submit_date.date().month in quarters):
@@ -586,7 +596,6 @@ def _JSONtoCSV2_0(data, domains_metadata, columns_to_add):
 
 # ------------------------------------------------------------------------------
 def JSONtoCSVall(data, domains_metadata, columns_to_add=[]):
-
     api_version = getAPIversion(data)
 
     if api_version == '1.1' or api_version == '1.0':
@@ -618,10 +627,11 @@ def _JSONtoCSVall1_1(data, domains_metadata, columns_to_add):
         domains_metadata = domains_metadata.set_index(measurementType, inplace=False)
 
     for domainresults in domains:
-        # line= [{"submit_date": submit_date},]
-        line = [{"submit_date": payload['submission-date']}]
         domainname = domainresults['domain']
-        line.append({'domain': domainname})
+        line = [{"submit_datetime": submit_date},
+                {'submit_date': submit_date.strftime('%Y-%m-%d')},
+                {'domain': domainname}
+                ]
 
         quarters = [4, 7, 10, 1]
         if (submit_date.date().month in quarters):
@@ -715,8 +725,10 @@ def _JSONtoCSVall2_0(data, domains_metadata, columns_to_add):
 
     for domainname in domains:
         domainresults = domains[domainname]
-        # line= [{"submit_date": submit_date},]
-        line = [{"submit_date": data['request']['submit_date']}, {'domain': domainname}]
+        line = [{"submit_datetime": submit_date},
+                {'submit_date': submit_date.strftime('%Y-%m-%d')},
+                {'domain': domainname}
+                ]
 
         quarters = [4, 7, 10, 1]
         if (submit_date.date().month in quarters):
@@ -766,7 +778,8 @@ def _JSONtoCSVall2_0(data, domains_metadata, columns_to_add):
             if 'tests' in domainresults['results']:
                 dom_views = domainresults['results']['tests']
                 for view in dom_views:
-                    line.append({view: int(dom_views[view]['status'] == 'passed' or dom_views[view]['status'] == 'warning')})
+                    line.append(
+                        {view: int(dom_views[view]['status'] == 'passed' or dom_views[view]['status'] == 'warning')})
 
         # Finally add the link as well
         if 'report' in domainresults:
@@ -790,4 +803,3 @@ def _JSONtoCSVall2_0(data, domains_metadata, columns_to_add):
     # print(body)
 
     return {"header": header, "body": body}
-
