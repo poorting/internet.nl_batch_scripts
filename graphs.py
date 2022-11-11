@@ -868,6 +868,9 @@ def detailLastPeriod_type(context, db_con):
 
 # ------------------------------------------------------------------------------
 def get_Context(con, args):
+
+    pp = pprint.PrettyPrinter(indent=4)
+
     context = {
         'tables': [],
         'period_unit': 'month',
@@ -918,7 +921,7 @@ def get_Context(con, args):
         context['period_unit'] = 'rawdates'
         context['period_col'] = 'submit_date'
         context['period_str_col'] = 'submit_date'
-        q_str = "SELECT DISTINCT({0}) FROM {1} ORDER BY {0} DESC".format(
+        q_str = "SELECT DISTINCT(CAST({0} AS VARCHAR)) as {0} FROM {1} ORDER BY {0} DESC".format(
             context['period_col'], context['tables'][0])
 
     arr = con.execute(q_str).fetchnumpy()
