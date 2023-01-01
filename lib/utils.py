@@ -538,10 +538,18 @@ def _JSONtoCSV2_0(data, domains_metadata, columns_to_add):
                 for md in columns_to_add:
                     line.append({'md_{}'.format(md): TYPE_UNKNOWN})
 
+        error_status = False
         if 'status' in domainresults:
             line.append({'status': domainresults['status']})
+            error_status = domainresults['status'] == 'error'
         else:
             line.append({'status': ''})
+            error_status = True
+
+        if error_status:
+            logger.error(f'[{submit_date.date()}] domain {domainname} has status "error", no results stored')
+            line = []
+            continue
 
         if 'scoring' in domainresults:
             line.append({'score': int(domainresults['scoring']['percentage'])})
