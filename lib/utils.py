@@ -17,8 +17,8 @@ logger = logging.getLogger('__main__')
 
 TYPE_UNKNOWN = '<unknown>'
 categories = {
-    "mail": ["mail_ipv6", "mail_dnssec", "mail_auth", "mail_starttls"],
-    "web": ["web_ipv6", "web_dnssec", "web_https", "web_appsecpriv"],
+    "mail": ["mail_ipv6", "mail_dnssec", "mail_auth", "mail_starttls", "mail_rpki"],
+    "web": ["web_ipv6", "web_dnssec", "web_https", "web_appsecpriv", "web_rpki"],
 }
 
 specific_tests = {
@@ -60,12 +60,18 @@ v2_to_1_cats = {
         "mail_dnssec": "dnssec",
         "mail_auth": "auth",
         "mail_starttls": "tls",
+        "mail_rpki": "rpki",
+        # v1 results don't have rpki results, but a key is needed here
+        # at least so the lookup in results can fail (and a 0 is the result)
     },
     "web": {
         "web_ipv6": "ipv6",
         "web_dnssec": "dnssec",
         "web_https": "tls",
         "web_appsecpriv": "appsecpriv",
+        "web_rpki": "rpki",
+        # v1 results don't have rpki results, but a key is needed here
+        # at least so the lookup in results can fail (and a 0 is the result)
     }
 }
 
