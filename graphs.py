@@ -51,10 +51,10 @@ paletteDelta = ["#ff0000", "#c10000", "#00a100", "#00ff00"]
 type_palettes = [paletteR, paletteRG, paletteBG, paletteOrg, paletteB, paletteG]
 
 qry_items_score = {
-    'web': ' round(avg(score)) as "score(web)", round(avg(web_ipv6*100)) AS "IPv6 (web)", '
+    'web': 'round(avg(score)) as "score(web)", round(avg(web_ipv6*100)) AS "IPv6 (web)", '
            'round(avg(web_dnssec*100)) AS "DNSSEC (web)", round(avg(web_https*100)) AS "TLS",'
-           'round(avg(web_rpki*100)) AS "RPKI (web)" ',
-    'mail': ' round(avg(score)) as "score(mail)", round(avg(mail_ipv6*100)) AS "IPv6 (mail)", '
+           'round(avg(web_appsecpriv_securitytxt*100)) AS "security.txt", round(avg(web_rpki*100)) AS "RPKI (web)" ',
+    'mail': 'round(avg(score)) as "score(mail)", round(avg(mail_ipv6*100)) AS "IPv6 (mail)", '
             'round(avg(mail_dnssec*100)) AS "DNSSEC (mail)", round(avg(mail_starttls_tls_available*100)) AS "STARTTLS",'
             'round(avg(mail_starttls_dane_valid*100)) as "DANE", round(avg(mail_auth_spf_policy*100)) as "SPF",'
             'round(avg(mail_auth_dkim_exist*100)) AS "DKIM", round(avg(mail_auth_dmarc_policy*100)) AS "DMARC", '
@@ -62,8 +62,8 @@ qry_items_score = {
 }
 
 qry_items_detail = {
-    'web': ' domain, score, web_ipv6 as "IPv6", web_dnssec AS "DNSSEC", web_https AS "TLS", web_rpki as "RPKI" ',
-    'mail': ' domain, score, mail_ipv6 AS "IPv6", mail_dnssec AS "DNSSEC", mail_starttls_tls_available AS "STARTTLS",'
+    'web': 'domain, score, web_ipv6 as "IPv6", web_dnssec AS "DNSSEC", web_https AS "TLS", web_appsecpriv_securitytxt as "security.txt", web_rpki as "RPKI" ',
+    'mail': 'domain, score, mail_ipv6 AS "IPv6", mail_dnssec AS "DNSSEC", mail_starttls_tls_available AS "STARTTLS",'
             'mail_starttls_dane_valid as "DANE", mail_auth_spf_policy as "SPF", mail_auth_dkim_exist AS "DKIM",'
             'mail_auth_dmarc_policy AS "DMARC", mail_rpki as "RPKI" ',
 }
@@ -253,7 +253,7 @@ def createBarGraph(df, title=' ', y_label='score/percentage', label_suffix='', p
 
     sns.set_style('ticks')
 
-    barWidth = 0.90
+    barWidth = 1.0
     # Number of bars as gap in between categories
     cat_gap = 1
 
@@ -532,6 +532,31 @@ def scoreLastPeriods(context, db_con):
     plt.savefig(filename + '.svg', bbox_inches='tight')
     plt.savefig(filename + '.png', bbox_inches='tight')
     plt.close()
+
+
+# ------------------------------------------------------------------------------
+def scoreLastPeriods2(context, db_con):
+    pp = pprint.PrettyPrinter(indent=4)
+
+    ret_dfs = []
+
+    print("Score latest periods overall ({} - {})".format(context['start_period_str'], context['end_period_str']))
+
+    df_mw = []
+
+    for tbl in context['tables']:
+        query = "SELECT max({3}) as {3},{1} from {0} where {2}>=\'{4}\' and {2}<=\'{5}\' group by {2} order by {2} asc".format(
+            tbl, qry_items_score[tbl], context['period_col'], context['period_str_col'], context['start_period'],
+            context['end_period'])
+        df = db_con.execute(query).fetchdf()
+
+        title = 'Results {} overall ({} - {})'.format(tbl, context['start_period_str'], context['end_period_str'])
+        filename = "{}/Scores-overall-{}".format(context['output_dir'], tbl)
+        p = createBarGraph(df, title=title, palette=paletteBR)
+
+        plt.savefig(filename + '.svg', bbox_inches='tight')
+        plt.savefig(filename + '.png', bbox_inches='tight')
+        plt.close()
 
 
 # ------------------------------------------------------------------------------
