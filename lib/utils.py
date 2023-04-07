@@ -423,7 +423,7 @@ def _JSONtoCSV1_1(data, domains_metadata, columns_to_add):
                 for md in columns_to_add:
                     # check if metadata column exists first
                     if md in domains_metadata.columns:
-                        line.append({'md_{}'.format(md): domains_metadata.at[domainname, md]})
+                        line.append({'md_{}'.format(md): "\"" + domains_metadata.at[domainname, md] + "\""})
                     else:
                         line.append({'md_{}'.format(md): TYPE_UNKNOWN})
             else:
@@ -536,7 +536,7 @@ def _JSONtoCSV2_0(data, domains_metadata, columns_to_add):
                 for md in columns_to_add:
                     # check if metadata column exists first
                     if md in domains_metadata.columns:
-                        line.append({'md_{}'.format(md): domains_metadata.at[domainname, md]})
+                        line.append({'md_{}'.format(md): "\"" + domains_metadata.at[domainname, md] + "\""})
                     else:
                         line.append({'md_{}'.format(md): TYPE_UNKNOWN})
             else:
@@ -669,7 +669,7 @@ def _JSONtoCSVall1_1(data, domains_metadata, columns_to_add):
                 for md in columns_to_add:
                     # check if metadata column exists first
                     if md in domains_metadata.columns:
-                        line.append({'{}'.format(md): domains_metadata.at[domainname, md]})
+                        line.append({'{}'.format(md): "\"" + domains_metadata.at[domainname, md] + "\""})
                     else:
                         line.append({'{}'.format(md): TYPE_UNKNOWN})
             else:
@@ -766,7 +766,7 @@ def _JSONtoCSVall2_0(data, domains_metadata, columns_to_add):
                 for md in columns_to_add:
                     # check if metadata column exists first
                     if md in domains_metadata.columns:
-                        line.append({'{}'.format(md): domains_metadata.at[domainname, md]})
+                        line.append({'{}'.format(md): "\"" + domains_metadata.at[domainname, md] + "\""})
                     else:
                         line.append({'{}'.format(md): TYPE_UNKNOWN})
             else:
