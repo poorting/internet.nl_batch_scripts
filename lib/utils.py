@@ -35,6 +35,7 @@ specific_tests = {
         "web_https_tls_version",
         "web_https_http_redirect",
         "web_https_http_hsts",
+        "web_appsecpriv_securitytxt",
     ]
 }
 
@@ -577,7 +578,9 @@ def _JSONtoCSV2_0(data, domains_metadata, columns_to_add):
                     for view in dom_views:
                         if view == test:
                             # res = int(view['result'])
-                            res = int(dom_views[view]['status'] == 'passed' or dom_views[view]['status'] == 'warning')
+                            res = int(dom_views[view]['status'] == 'passed' or
+                                      dom_views[view]['status'] == 'info' or
+                                      (dom_views[view]['status'] == 'warning' and dom_views[view]["verdict"] != 'bad'))
                             break
                     line.append({test: res})
 
@@ -793,9 +796,11 @@ def _JSONtoCSVall2_0(data, domains_metadata, columns_to_add):
                 dom_views = domainresults['results']['tests']
                 for view in dom_views:
                     line.append(
-                        {view: int(dom_views[view]['status'] == 'passed' or dom_views[view]['status'] == 'warning')})
+                        {view: int(dom_views[view]['status'] == 'passed' or
+                                   dom_views[view]['status'] == 'info' or
+                                   (dom_views[view]['status'] == 'warning' and dom_views[view]['verdict'] != 'bad'))})
 
-        # Finally add the link as well
+                    # Finally add the link as well
         if 'report' in domainresults:
             line.append({'url': domainresults['report']['url']})
         else:
