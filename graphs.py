@@ -52,18 +52,20 @@ type_palettes = [paletteR, paletteRG, paletteBG, paletteOrg, paletteB, paletteG]
 
 qry_items_score = {
     'web': ' round(avg(score)) as "score(web)", round(avg(web_ipv6*100)) AS "IPv6 (web)", '
-           'round(avg(web_dnssec*100)) AS "DNSSEC (web)", round(avg(web_https*100)) AS "TLS" ',
+           'round(avg(web_dnssec*100)) AS "DNSSEC (web)", round(avg(web_https*100)) AS "TLS",'
+           'round(avg(web_rpki*100)) AS "RPKI (web)" ',
     'mail': ' round(avg(score)) as "score(mail)", round(avg(mail_ipv6*100)) AS "IPv6 (mail)", '
             'round(avg(mail_dnssec*100)) AS "DNSSEC (mail)", round(avg(mail_starttls_tls_available*100)) AS "STARTTLS",'
             'round(avg(mail_starttls_dane_valid*100)) as "DANE", round(avg(mail_auth_spf_policy*100)) as "SPF",'
-            'round(avg(mail_auth_dkim_exist*100)) AS "DKIM", round(avg(mail_auth_dmarc_policy*100)) AS "DMARC" ',
+            'round(avg(mail_auth_dkim_exist*100)) AS "DKIM", round(avg(mail_auth_dmarc_policy*100)) AS "DMARC", '
+            'round(avg(mail_rpki*100)) AS "RPKI (mail)" ',
 }
 
 qry_items_detail = {
-    'web': ' domain, score, web_ipv6 as "IPv6", web_dnssec AS "DNSSEC", web_https AS "TLS" ',
+    'web': ' domain, score, web_ipv6 as "IPv6", web_dnssec AS "DNSSEC", web_https AS "TLS", web_rpki as "RPKI" ',
     'mail': ' domain, score, mail_ipv6 AS "IPv6", mail_dnssec AS "DNSSEC", mail_starttls_tls_available AS "STARTTLS",'
             'mail_starttls_dane_valid as "DANE", mail_auth_spf_policy as "SPF", mail_auth_dkim_exist AS "DKIM",'
-            'mail_auth_dmarc_policy AS "DMARC" ',
+            'mail_auth_dmarc_policy AS "DMARC", mail_rpki as "RPKI" ',
 }
 
 
@@ -644,13 +646,16 @@ def deltaToPrevious(context, db_con):
         #   0      1          2     Better than previous
         #
         # for this to work we have to set the domain as index
-        # (so they will be ignored for the subtraction)
+        # so they will be ignored for the subtraction itself
+        # *and* have subtractions operate on the same domain rows
         df1 = df1.set_index('domain')
         df2 = df2.set_index('domain')
         df2 = df2 * 2
         df2.score = round(df2.score / 2)
         df2 = df2.astype({"score": int})
         df = df2.subtract(df1)
+        # domains without a previous score will have an N/A score
+        # at this point, fill it with a zero
         df['score'].fillna(0, inplace=True)
         df = df.astype({"score": int})
 
