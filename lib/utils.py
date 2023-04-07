@@ -575,13 +575,10 @@ def _JSONtoCSV2_0(data, domains_metadata, columns_to_add):
                 dom_views = domainresults['results']['tests']
                 for test in specific_tests[measurementType]:
                     res = 0
-                    for view in dom_views:
-                        if view == test:
-                            # res = int(view['result'])
-                            res = int(dom_views[view]['status'] == 'passed' or
-                                      dom_views[view]['status'] == 'info' or
-                                      (dom_views[view]['status'] == 'warning' and dom_views[view]["verdict"] != 'bad'))
-                            break
+                    if test in dom_views:
+                        res = int(dom_views[test]['status'] == 'passed' or
+                                  dom_views[test]['status'] == 'info' or
+                                  (dom_views[test]['status'] == 'warning' and dom_views[test]["verdict"] != 'bad'))
                     line.append({test: res})
 
         else:
