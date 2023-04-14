@@ -62,10 +62,25 @@ qry_items_score = {
 }
 
 qry_items_detail = {
-    'web': 'domain, score, web_ipv6 as "IPv6", web_dnssec AS "DNSSEC", web_https AS "TLS", web_appsecpriv_securitytxt as "security.txt", web_rpki as "RPKI" ',
+    'web': 'domain, score, web_ipv6 as "IPv6", web_dnssec AS "DNSSEC", web_https AS "TLS", web_appsecpriv_securitytxt as "security.txt", web_rpki as "RPKI", cast(web_dnssec=1 and web_https=1 and web_ipv6=1 as int) as compliant',
     'mail': 'domain, score, mail_ipv6 AS "IPv6", mail_dnssec AS "DNSSEC", mail_starttls_tls_available AS "STARTTLS",'
             'mail_starttls_dane_valid as "DANE", mail_auth_spf_policy as "SPF", mail_auth_dkim_exist AS "DKIM",'
             'mail_auth_dmarc_policy AS "DMARC", mail_rpki as "RPKI" ',
+}
+
+qry_items_compliance = {
+    'web': {
+        'web': 'web_ipv6=1 and web_dnssec=1 and web_https=1 and web_https_http_redirect=1 and web_https_http_hsts=1',
+        'web - no IPv6': 'web_dnssec=1 and web_https=1 and web_https_http_redirect=1 and web_https_http_hsts=1',
+    },
+    'mail': {
+        'mail (connection)':
+            'mail_ipv6=1 and mail_starttls_tls_available=1 and mail_starttls_dane_valid=1 and mail_dnssec',
+        'mail (connection) - no IPv6':
+            'mail_starttls_tls_available=1 and mail_starttls_dane_valid=1 and mail_dnssec',
+        'mail (anti-phishing)':
+            'mail_auth_spf_policy=1 and mail_auth_dkim_exist=1 and mail_auth_dmarc_policy=1',
+    }
 }
 
 
@@ -550,13 +565,14 @@ def scoreLastPeriods2(context, db_con):
             context['end_period'])
         df = db_con.execute(query).fetchdf()
 
-        title = 'Results {} overall ({} - {})'.format(tbl, context['start_period_str'], context['end_period_str'])
-        filename = "{}/Scores-overall-{}".format(context['output_dir'], tbl)
-        p = createBarGraph(df, title=title, palette=paletteBR)
-
-        plt.savefig(filename + '.svg', bbox_inches='tight')
-        plt.savefig(filename + '.png', bbox_inches='tight')
-        plt.close()
+        pp.pprint(df)
+        # title = 'Results {} overall ({} - {})'.format(tbl, context['start_period_str'], context['end_period_str'])
+        # filename = "{}/Scores-overall-{}".format(context['output_dir'], tbl)
+        # p = createBarGraph(df, title=title, palette=paletteBR)
+        #
+        # plt.savefig(filename + '.svg', bbox_inches='tight')
+        # plt.savefig(filename + '.png', bbox_inches='tight')
+        # plt.close()
 
 
 # ------------------------------------------------------------------------------
@@ -615,6 +631,42 @@ def scoreLastPeriod_type(context, db_con):
         plt.savefig(filename + '.svg', bbox_inches='tight')
         plt.savefig(filename + '.png', bbox_inches='tight')
         plt.close()
+
+
+# ------------------------------------------------------------------------------
+def complianceLastPeriods_type(context, db_con):
+
+    pp = pprint.PrettyPrinter(indent=4)
+
+    print("Compliance latest period per value of {} ({}-{})".format(
+        context['type'], context['start_period_str'], context['end_period_str']))
+
+    i = 0
+    for tbl in context['tables']:
+        for name, comp_items in qry_items_compliance[tbl].items():
+            print(f"\t{name}")
+
+            query = "SELECT {5} as period, md_{2} as '{2}', "\
+                    "round(100.0*(select count(*) from {0} where {5}=period and md_{2}={2} and {3})/"\
+                    "(select count(*) from {0} where {5}=period and md_{2}={2})) as compliant "\
+                    "from {0} where md_{2}!='<unknown>' "\
+                    "and {4}>={6} and {4}<={7} group by all order by md_{2} desc, {4} asc".format(
+                tbl, qry_items_score[tbl], context['type'], comp_items,
+                context['period_col'], context['period_str_col'], context['start_period'], context['end_period'],)
+
+            df = db_con.execute(query).fetchdf()
+            df = df.pivot(index='period', columns=context['type'], values='compliant')
+            df = df.reindex(context['type_vals'], axis=1)
+            df.reset_index(inplace=True)
+
+            title = 'Compliance {} ({} - {})'.format(name, context['start_period_str'], context['end_period_str'])
+            filename = "{}/compliance-{}".format(context['output_dir'], name)
+            p = createBarGraph(df, title=title, palette=type_palettes[i % len(type_palettes)])
+            i += 1
+
+            plt.savefig(filename + '.svg', bbox_inches='tight')
+            plt.savefig(filename + '.png', bbox_inches='tight')
+            plt.close()
 
 
 # ------------------------------------------------------------------------------
@@ -1056,6 +1108,8 @@ def main():
     scoreLastPeriods(context, con)
     scoreLastPeriod_type(context, con)
     scoreLastPeriods_type(context, con)
+
+    complianceLastPeriods_type(context, con)
 
     detailLastPeriod(context, con)
     detailLastPeriod_type(context, con)
