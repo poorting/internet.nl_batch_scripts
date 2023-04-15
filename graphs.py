@@ -173,6 +173,12 @@ def parser_add_arguments():
                         metavar='TYPE',
                         default='type')
 
+    parser.add_argument("-x", "--export",
+                        help=textwrap.dedent('''\
+                        output underlying values for each graph as an excel file
+                             '''),
+                        action="store_true")
+
     parser.add_argument("-f",
                         help=textwrap.dedent('''\
                             Specify the font to use (e.g. Helvetica)
@@ -542,6 +548,10 @@ def scoreLastPeriods(context, db_con):
 
     title = 'Results overall ({} - {})'.format(context['start_period_str'], context['end_period_str'])
     filename = "{}/Scores-overall".format(context['output_dir'])
+
+    if context['export_xlsx']:
+        context['dataframes']["Scores-overall"] = df
+
     p = createBarGraph(df, title=title, palette=paletteBR)
 
     plt.savefig(filename + '.svg', bbox_inches='tight')
@@ -596,11 +606,13 @@ def scoreLastPeriod_type(context, db_con):
         df_mw[1].drop(context['type'], axis=1, inplace=True)
         df = pd.concat(df_mw, axis=1)
 
-    pp.pprint(df)
-
     print("\tCreating bar graph")
     title = 'Results per {} ({})'.format(context['type'], context['end_period_str'])
     filename = "{}/Scores-overall-per-{}".format(context['output_dir'], context['type'])
+
+    if context['export_xlsx']:
+        context['dataframes']["Scores-overall-per-{}".format(context['type'])] = df
+
     p = createBarGraph(df, title=title, palette=paletteSector)
     plt.savefig(filename + '.svg', bbox_inches='tight')
     plt.savefig(filename + '.png', bbox_inches='tight')
@@ -666,6 +678,10 @@ def scoreLastPeriods_type(context, db_con):
 
         title = 'Results {} ({} - {})'.format(metadata, context['start_period_str'], context['end_period_str'])
         filename = "{}/Scores-{}".format(context['output_dir'], metadata)
+
+        if context['export_xlsx']:
+            context['dataframes']["Scores-{}".format(metadata)] = df
+
         p = createBarGraph(df, title=title, palette=type_palettes[i % len(type_palettes)])
         plt.savefig(filename + '.svg', bbox_inches='tight')
         plt.savefig(filename + '.png', bbox_inches='tight')
@@ -700,7 +716,8 @@ def complianceLastPeriod_type(context, db_con):
 
             title = 'Compliant {} ({})'.format(name, context['end_period_str'])
             filename = "{}/compliance-{}".format(context['output_dir'], name)
-            # df.to_excel("{}.xlsx".format(filename), index=None, header=True)
+            if context['export_xlsx']:
+                context['dataframes']["compliance-{}".format(name)] = df
 
             # p = createBarGraph(df, title=title, palette=type_palettes[i % len(type_palettes)])
             p = createBarGraph(df, title=title, palette=paletteSector)
@@ -738,7 +755,8 @@ def complianceLastPeriods_type(context, db_con):
 
             title = 'Compliant {} ({} - {})'.format(name, context['start_period_str'], context['end_period_str'])
             filename = "{}/compliance-history-{}".format(context['output_dir'], name)
-            # df.to_excel("{}.xlsx".format(filename), index=None, header=True)
+            if context['export_xlsx']:
+                context['dataframes']["compliance-history-{}".format(name)] = df
             p = createBarGraph(df, title=title, palette=type_palettes[i % len(type_palettes)])
             i += 1
 
@@ -764,6 +782,9 @@ def detailLastPeriod(context, db_con):
 
         title = 'Details {} ({})'.format(tbl, context['end_period_str'])
         filename = "{}/Details-overall-{}".format(context['output_dir'], tbl)
+
+        if context['export_xlsx']:
+            context['dataframes']["Details-overall-{}".format(tbl)] = df
 
         p = createHeatmap(df, title=title)
 
@@ -837,6 +858,8 @@ def deltaToPrevious(context, db_con):
         dfBot = df.tail(abs(bot)).copy()
 
         print("\tDelta for all ({}, {} - {})".format(tbl, context['prev_period_str'], context['end_period_str']))
+        if context['export_xlsx']:
+            context['dataframes']["Delta-all-{}".format(tbl)] = df
         p = createHeatmap(
             df,
             title='Delta ({0}, {1} - {2})'.format(tbl, context['prev_period_str'], context['end_period_str']),
@@ -937,6 +960,8 @@ def deltaToPrevious_type(context, db_con):
 
             print("\tDelta for {} ({}, {} - {})".format(metadata, tbl, context['prev_period_str'],
                                                         context['end_period_str']))
+            if context['export_xlsx']:
+                context['dataframes']["Delta-all-{}-{}".format(metadata, tbl)] = df
             p = createHeatmap(
                 df,
                 title='Delta for {3} ({0}, {1} - {2})'.format(tbl, context['prev_period_str'],
@@ -945,20 +970,6 @@ def deltaToPrevious_type(context, db_con):
             plt.savefig('{}/Delta-{}-{}.png'.format(context['output_dir'], metadata, tbl), bbox_inches='tight')
             plt.savefig('{}/Delta-{}-{}.svg'.format(context['output_dir'], metadata, tbl), bbox_inches='tight')
             plt.close()
-
-            # print("\tTop {} for {} ({}, {}-{})".format(len(dfTop), metadata, tbl, context['prev_period_str'], context['end_period_str']))
-            # p = createHeatmap(
-            #     dfTop,
-            #     title="Top {0} for {4} ({1}, {2}-{3})".format(len(dfTop), tbl, context['prev_period_str'], context['end_period_str'], metadata), incsign=True)
-            # plt.savefig('{}/Delta-{}-top-{}.png'.format(context['output_dir'], metadata, tbl), bbox_inches='tight')
-            # plt.savefig('{}/Delta-{}-top-{}.svg'.format(context['output_dir'], metadata, tbl), bbox_inches='tight')
-            #
-            # print("\tBottom {} ({}, {}-{})".format(len(dfBot), tbl, context['prev_period_str'], context['end_period_str']))
-            # p = createHeatmap(
-            #     dfBot,
-            #     title="Bottom {0} for {4} ({1}, {2}-{3})".format(len(dfBot), tbl, context['prev_period_str'], context['end_period_str'], metadata), incsign=True)
-            # plt.savefig('{}/Delta-{}-bottom-{}.png'.format(context['output_dir'], metadata, tbl), bbox_inches='tight')
-            # plt.savefig('{}/Delta-{}-bottom-{}.svg'.format(context['output_dir'], metadata, tbl), bbox_inches='tight')
 
 
 # ------------------------------------------------------------------------------
@@ -979,6 +990,10 @@ def detailLastPeriod_type(context, db_con):
 
             title = 'Details {} ({}, {})'.format(tbl, metadata, context['end_period_str'])
             filename = "{}/Details-{}-{}".format(context['output_dir'], metadata, tbl)
+
+            if context['export_xlsx']:
+                context['dataframes']["Details-{}-{}".format(metadata, tbl)] = df
+
             p = createHeatmap(df, title=title)
 
             plt.savefig(filename + '.png', bbox_inches='tight')
@@ -1002,7 +1017,9 @@ def get_Context(con, args):
         'type': None,
         'type_vals': [],
         'output_dir': None,
-        'output_dir_is_file': False
+        'output_dir_is_file': False,
+        'export_xlsx': args.export,
+        'dataframes': {},
     }
 
     tables = con.execute("show tables").fetchnumpy()
@@ -1157,6 +1174,14 @@ def main():
         deltaToPrevious_type(context, con)
 
     con.close()
+
+    if context['export_xlsx']:
+        print("Exporting underlying data for the graphs to data.xlsx")
+        # Create a Pandas Excel writer
+        with pd.ExcelWriter(f"{context['output_dir']}/data.xlsx", engine="openpyxl") as writer:
+            # Write each dataframe to a different worksheet.
+            for name, frame in context['dataframes'].items():
+                frame.to_excel(writer, sheet_name=name)
 
 
 if __name__ == '__main__':
