@@ -269,14 +269,10 @@ def get_logger(args):
 
 
 # ------------------------------------------------------------------------------
-def createBarGraph(df, title=' ', y_label='score/percentage', label_suffix='', palette=paletteR):
+def createBarGraph(df, title=' ', y_label='score/percentage', label_suffix='', palette=paletteR, widegraph=False):
     pp = pprint.PrettyPrinter(indent=4)
 
     sns.set_style('ticks')
-
-    barWidth = 1.0
-    # Number of bars as gap in between categories
-    cat_gap = 1
 
     # Assume first column are the periods
     df = df.set_index(df.columns[0])
@@ -297,7 +293,16 @@ def createBarGraph(df, title=' ', y_label='score/percentage', label_suffix='', p
     my_cmap = LinearSegmentedColormap.from_list('Custom', palette, segments)
 
     # if (df.columns)
-    plt.figure(figsize=(3 + (len(df.columns) * len(df)) / 5.5, 8))
+    figwidth = 3 + (len(df.columns) * len(df)) / 5.5
+    barWidth = 1.0
+    # Number of bars as gap in between categories
+    cat_gap = 1
+
+    if widegraph:
+        figwidth *= 3
+        barWidth = 0.5
+
+    plt.figure(figsize=(figwidth, 8))
     ax = plt.subplot()
     ax.set_title(title, fontname=_graph_font, fontsize='large', y=1.05)
     ax.set_ylabel('score/percentage', fontname=_graph_font, fontsize='medium', loc='center')
@@ -334,8 +339,14 @@ def createBarGraph(df, title=' ', y_label='score/percentage', label_suffix='', p
                 )
         # Plot the values on top
         for j, r in enumerate(rbars):
-            plt.text(x=r - 0.2, y=df.iloc[i, j] + 1.5, s=str(int(df.iloc[i, j])),
-                     fontname=_graph_font, fontweight='normal', fontsize='small', rotation='vertical')
+            x = r - 0.2
+            rotation = 'vertical'
+            if widegraph:
+                x = r - 0.05
+                rotation = 'horizontal'
+            y = df.iloc[i, j] + 1.5
+            s = str(int(df.iloc[i, j]))
+            plt.text(x=x, y=y, s=s, fontname=_graph_font, fontweight='normal', fontsize='small', rotation=rotation)
 
     barsx = []
     for i in range(0, len(categories)):
@@ -720,7 +731,7 @@ def complianceLastPeriod_type(context, db_con):
                 context['dataframes']["Compliance-{}".format(name)] = df
 
             # p = createBarGraph(df, title=title, palette=type_palettes[i % len(type_palettes)])
-            p = createBarGraph(df, title=title, palette=paletteSector)
+            p = createBarGraph(df, title=title, palette=paletteSector, widegraph=True)
 
             plt.savefig(filename + '.svg', bbox_inches='tight')
             plt.savefig(filename + '.png', bbox_inches='tight')
