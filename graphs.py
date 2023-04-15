@@ -740,7 +740,7 @@ def complianceLastPeriods_type(context, db_con):
         for name, comp_items in qry_items_compliance[tbl].items():
             print(f"\t{name}")
 
-            query = "SELECT {5} as period, md_{2} as '{2}', "\
+            query = "SELECT {4} as sort, {5} as period, md_{2} as '{2}', "\
                     "round(100.0*(select count(*) from {0} where {5}=period and md_{2}={2} and {3})/"\
                     "(select count(*) from {0} where {5}=period and md_{2}={2})) as compliant "\
                     "from {0} where md_{2}!='<unknown>' "\
@@ -749,9 +749,11 @@ def complianceLastPeriods_type(context, db_con):
                 context['period_col'], context['period_str_col'], context['start_period'], context['end_period'],)
 
             df = db_con.execute(query).fetchdf()
-            df = df.pivot(index='period', columns=context['type'], values='compliant')
+            df = df.pivot(index=('sort', 'period'), columns=context['type'], values='compliant')
             df = df.reindex(context['type_vals'], axis=1)
+
             df.reset_index(inplace=True)
+            df.drop('sort', axis=1, inplace=True)
 
             title = 'Compliant {} ({} - {})'.format(name, context['start_period_str'], context['end_period_str'])
             filename = "{}/Compliance-history-{}".format(context['output_dir'], name)
