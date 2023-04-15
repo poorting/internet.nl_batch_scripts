@@ -74,11 +74,11 @@ qry_items_compliance = {
         'web - no IPv6': 'web_dnssec=1 and web_https=1 and web_https_http_redirect=1 and web_https_http_hsts=1',
     },
     'mail': {
-        'mail (connection)':
+        'mail connection':
             'mail_ipv6=1 and mail_starttls_tls_available=1 and mail_starttls_dane_valid=1 and mail_dnssec',
-        'mail (connection) - no IPv6':
+        'mail connection - no IPv6':
             'mail_starttls_tls_available=1 and mail_starttls_dane_valid=1 and mail_dnssec',
-        'mail (anti-phishing)':
+        'anti-phishing':
             'mail_auth_spf_policy=1 and mail_auth_dkim_exist=1 and mail_auth_dmarc_policy=1',
     }
 }
@@ -596,6 +596,8 @@ def scoreLastPeriod_type(context, db_con):
         df_mw[1].drop(context['type'], axis=1, inplace=True)
         df = pd.concat(df_mw, axis=1)
 
+    pp.pprint(df)
+
     print("\tCreating bar graph")
     title = 'Results per {} ({})'.format(context['type'], context['end_period_str'])
     filename = "{}/Scores-overall-per-{}".format(context['output_dir'], context['type'])
@@ -634,11 +636,86 @@ def scoreLastPeriod_type(context, db_con):
 
 
 # ------------------------------------------------------------------------------
+def scoreLastPeriods_type(context, db_con):
+    pp = pprint.PrettyPrinter(indent=4)
+
+    if not context['type']:
+        return []
+
+    ret_dfs = []
+
+    for i, metadata in enumerate(context['type_vals']):
+        print(
+            "Score latest periods for {} = {} ({} - {})".format(context['type'], metadata, context['start_period_str'],
+                                                                context['end_period_str']))
+        df_mw = []
+
+        for tbl in context['tables']:
+            query = 'SELECT max({3}) as {3},{1} from {0} where {2}>=\'{4}\' and {2}<=\'{5}\' and md_{6}=\'{7}\' group by {2} order by {2} asc'.format(
+                tbl, qry_items_score[tbl], context['period_col'], context['period_str_col'], context['start_period'],
+                context['end_period'],
+                context['type'], metadata)
+            df_mw.append(db_con.execute(query).fetchdf())
+
+        df = df_mw[0]
+        if len(df_mw) > 1:
+            df_mw[1].drop(context['period_str_col'], axis=1, inplace=True)
+            df = pd.concat(df_mw, axis=1)
+
+        # pp.pprint(df)
+
+        title = 'Results {} ({} - {})'.format(metadata, context['start_period_str'], context['end_period_str'])
+        filename = "{}/Scores-{}".format(context['output_dir'], metadata)
+        p = createBarGraph(df, title=title, palette=type_palettes[i % len(type_palettes)])
+        plt.savefig(filename + '.svg', bbox_inches='tight')
+        plt.savefig(filename + '.png', bbox_inches='tight')
+        plt.close()
+
+        ret_dfs.append({'name': "Scores-{}".format(metadata), 'df': df})
+
+    return ret_dfs
+
+
+# ------------------------------------------------------------------------------
+def complianceLastPeriod_type(context, db_con):
+
+    pp = pprint.PrettyPrinter(indent=4)
+
+    print("Compliance latest period per value of {} ({})".format(
+        context['type'], context['end_period_str']))
+
+    for tbl in context['tables']:
+        for name, comp_items in qry_items_compliance[tbl].items():
+            print(f"\t{name}")
+
+            query = "SELECT md_{2} as '{2}', "\
+                    "round(100.0*(select count(*) from {0} where {4}={7} and md_{2}={2} and {3})/"\
+                    "(select count(*) from {0} where {4}={7} and md_{2}={2})) as compliant "\
+                    "from {0} where md_{2}!='<unknown>' "\
+                    "and {4}={7} group by all order by md_{2} desc, {4} asc".format(
+                tbl, qry_items_score[tbl], context['type'], comp_items,
+                context['period_col'], context['period_str_col'], context['start_period'], context['end_period'],)
+
+            df = db_con.execute(query).fetchdf()
+
+            title = 'Compliant {} ({})'.format(name, context['end_period_str'])
+            filename = "{}/compliance-{}".format(context['output_dir'], name)
+            # df.to_excel("{}.xlsx".format(filename), index=None, header=True)
+
+            # p = createBarGraph(df, title=title, palette=type_palettes[i % len(type_palettes)])
+            p = createBarGraph(df, title=title, palette=paletteSector)
+
+            plt.savefig(filename + '.svg', bbox_inches='tight')
+            plt.savefig(filename + '.png', bbox_inches='tight')
+            plt.close()
+
+
+# ------------------------------------------------------------------------------
 def complianceLastPeriods_type(context, db_con):
 
     pp = pprint.PrettyPrinter(indent=4)
 
-    print("Compliance latest period per value of {} ({}-{})".format(
+    print("Compliance latest periods per value of {} ({}-{})".format(
         context['type'], context['start_period_str'], context['end_period_str']))
 
     i = 0
@@ -659,8 +736,9 @@ def complianceLastPeriods_type(context, db_con):
             df = df.reindex(context['type_vals'], axis=1)
             df.reset_index(inplace=True)
 
-            title = 'Compliance {} ({} - {})'.format(name, context['start_period_str'], context['end_period_str'])
-            filename = "{}/compliance-{}".format(context['output_dir'], name)
+            title = 'Compliant {} ({} - {})'.format(name, context['start_period_str'], context['end_period_str'])
+            filename = "{}/compliance-history-{}".format(context['output_dir'], name)
+            # df.to_excel("{}.xlsx".format(filename), index=None, header=True)
             p = createBarGraph(df, title=title, palette=type_palettes[i % len(type_palettes)])
             i += 1
 
@@ -884,47 +962,6 @@ def deltaToPrevious_type(context, db_con):
 
 
 # ------------------------------------------------------------------------------
-def scoreLastPeriods_type(context, db_con):
-    pp = pprint.PrettyPrinter(indent=4)
-
-    if not context['type']:
-        return []
-
-    ret_dfs = []
-
-    for i, metadata in enumerate(context['type_vals']):
-        print(
-            "Score latest periods for {} = {} ({} - {})".format(context['type'], metadata, context['start_period_str'],
-                                                                context['end_period_str']))
-        df_mw = []
-
-        for tbl in context['tables']:
-            query = 'SELECT max({3}) as {3},{1} from {0} where {2}>=\'{4}\' and {2}<=\'{5}\' and md_{6}=\'{7}\' group by {2} order by {2} asc'.format(
-                tbl, qry_items_score[tbl], context['period_col'], context['period_str_col'], context['start_period'],
-                context['end_period'],
-                context['type'], metadata)
-            df_mw.append(db_con.execute(query).fetchdf())
-
-        df = df_mw[0]
-        if len(df_mw) > 1:
-            df_mw[1].drop(context['period_str_col'], axis=1, inplace=True)
-            df = pd.concat(df_mw, axis=1)
-
-        # pp.pprint(df)
-
-        title = 'Results {} ({} - {})'.format(metadata, context['start_period_str'], context['end_period_str'])
-        filename = "{}/Scores-{}".format(context['output_dir'], metadata)
-        p = createBarGraph(df, title=title, palette=type_palettes[i % len(type_palettes)])
-        plt.savefig(filename + '.svg', bbox_inches='tight')
-        plt.savefig(filename + '.png', bbox_inches='tight')
-        plt.close()
-
-        ret_dfs.append({'name': "Scores-{}".format(metadata), 'df': df})
-
-    return ret_dfs
-
-
-# ------------------------------------------------------------------------------
 def detailLastPeriod_type(context, db_con):
     pp = pprint.PrettyPrinter(indent=4)
 
@@ -1109,6 +1146,7 @@ def main():
     scoreLastPeriod_type(context, con)
     scoreLastPeriods_type(context, con)
 
+    complianceLastPeriod_type(context, con)
     complianceLastPeriods_type(context, con)
 
     detailLastPeriod(context, con)
