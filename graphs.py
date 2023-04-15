@@ -717,7 +717,7 @@ def complianceLastPeriod_type(context, db_con):
             title = 'Compliant {} ({})'.format(name, context['end_period_str'])
             filename = "{}/Compliance-{}".format(context['output_dir'], name)
             if context['export_xlsx']:
-                context['dataframes']["Compl-{}".format(name)] = df
+                context['dataframes']["Compliance-{}".format(name)] = df
 
             # p = createBarGraph(df, title=title, palette=type_palettes[i % len(type_palettes)])
             p = createBarGraph(df, title=title, palette=paletteSector)
@@ -756,7 +756,7 @@ def complianceLastPeriods_type(context, db_con):
             title = 'Compliant {} ({} - {})'.format(name, context['start_period_str'], context['end_period_str'])
             filename = "{}/Compliance-history-{}".format(context['output_dir'], name)
             if context['export_xlsx']:
-                context['dataframes']["Compl-hist-{}".format(name)] = df
+                context['dataframes']["Compliance-hist-{}".format(name)] = df
             p = createBarGraph(df, title=title, palette=type_palettes[i % len(type_palettes)])
             i += 1
 
