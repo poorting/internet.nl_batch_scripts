@@ -74,9 +74,9 @@ qry_items_compliance = {
         'web - no IPv6': 'web_dnssec=1 and web_https=1 and web_https_http_redirect=1 and web_https_http_hsts=1',
     },
     'mail': {
-        'mail connection':
+        'mail':
             'mail_ipv6=1 and mail_starttls_tls_available=1 and mail_starttls_dane_valid=1 and mail_dnssec',
-        'mail connection - no IPv6':
+        'mail - no IPv6':
             'mail_starttls_tls_available=1 and mail_starttls_dane_valid=1 and mail_dnssec',
         'anti-phishing':
             'mail_auth_spf_policy=1 and mail_auth_dkim_exist=1 and mail_auth_dmarc_policy=1',
@@ -715,9 +715,9 @@ def complianceLastPeriod_type(context, db_con):
             df = db_con.execute(query).fetchdf()
 
             title = 'Compliant {} ({})'.format(name, context['end_period_str'])
-            filename = "{}/compliance-{}".format(context['output_dir'], name)
+            filename = "{}/Compliance-{}".format(context['output_dir'], name)
             if context['export_xlsx']:
-                context['dataframes']["compliance-{}".format(name)] = df
+                context['dataframes']["Compl-{}".format(name)] = df
 
             # p = createBarGraph(df, title=title, palette=type_palettes[i % len(type_palettes)])
             p = createBarGraph(df, title=title, palette=paletteSector)
@@ -754,9 +754,9 @@ def complianceLastPeriods_type(context, db_con):
             df.reset_index(inplace=True)
 
             title = 'Compliant {} ({} - {})'.format(name, context['start_period_str'], context['end_period_str'])
-            filename = "{}/compliance-history-{}".format(context['output_dir'], name)
+            filename = "{}/Compliance-history-{}".format(context['output_dir'], name)
             if context['export_xlsx']:
-                context['dataframes']["compliance-history-{}".format(name)] = df
+                context['dataframes']["Compl-hist-{}".format(name)] = df
             p = createBarGraph(df, title=title, palette=type_palettes[i % len(type_palettes)])
             i += 1
 
@@ -1163,15 +1163,15 @@ def main():
     scoreLastPeriod_type(context, con)
     scoreLastPeriods_type(context, con)
 
-    complianceLastPeriod_type(context, con)
-    complianceLastPeriods_type(context, con)
-
     detailLastPeriod(context, con)
     detailLastPeriod_type(context, con)
 
     if context['prev_period']:
         deltaToPrevious(context, con)
         deltaToPrevious_type(context, con)
+
+    complianceLastPeriod_type(context, con)
+    complianceLastPeriods_type(context, con)
 
     con.close()
 
@@ -1180,7 +1180,8 @@ def main():
         # Create a Pandas Excel writer
         with pd.ExcelWriter(f"{context['output_dir']}/data.xlsx", engine="openpyxl") as writer:
             # Write each dataframe to a different worksheet.
-            for name, frame in context['dataframes'].items():
+            for name, frame in sorted(context['dataframes'].items()):
+                print(f"\t{name}({len(name)})")
                 frame.to_excel(writer, sheet_name=name)
 
 
