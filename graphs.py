@@ -1181,7 +1181,7 @@ def main():
         with pd.ExcelWriter(f"{context['output_dir']}/data.xlsx", engine="openpyxl") as writer:
             # Write each dataframe to a different worksheet.
             for name, frame in sorted(context['dataframes'].items()):
-                print(f"\t{name}({len(name)})")
+                print(f"\t{name}")
                 frame.to_excel(writer, sheet_name=name)
 
 
