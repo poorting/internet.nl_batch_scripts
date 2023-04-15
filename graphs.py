@@ -75,9 +75,9 @@ qry_items_compliance = {
     },
     'mail': {
         'mail':
-            'mail_ipv6=1 and mail_starttls_tls_available=1 and mail_starttls_dane_valid=1 and mail_dnssec',
+            'mail_ipv6=1 and mail_starttls_tls_available=1 and mail_starttls_dane_valid=1 and mail_dnssec=1',
         'mail - no IPv6':
-            'mail_starttls_tls_available=1 and mail_starttls_dane_valid=1 and mail_dnssec',
+            'mail_starttls_tls_available=1 and mail_starttls_dane_valid=1 and mail_dnssec=1',
         'anti-phishing':
             'mail_auth_spf_policy=1 and mail_auth_dkim_exist=1 and mail_auth_dmarc_policy=1',
     }
@@ -722,6 +722,8 @@ def complianceLastPeriod_type(context, db_con):
                     "and {4}={7} group by all order by md_{2} desc, {4} asc".format(
                 tbl, qry_items_score[tbl], context['type'], comp_items,
                 context['period_col'], context['period_str_col'], context['start_period'], context['end_period'],)
+
+            print(query)
 
             df = db_con.execute(query).fetchdf()
 
