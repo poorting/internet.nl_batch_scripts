@@ -545,17 +545,13 @@ def scoreLastPeriods(context, db_con):
         query = "SELECT max({3}) as {3},{1} from {0} where {2}>=\'{4}\' and {2}<=\'{5}\' group by {2} order by {2} asc".format(
             tbl, qry_items_score[tbl], context['period_col'], context['period_str_col'], context['start_period'],
             context['end_period'])
+        logger.debug(query)
         df_mw.append(db_con.execute(query).fetchdf())
-
-    # for df in df_mw:
-    #     pp.pprint(df)
 
     df = df_mw[0]
     if len(df_mw) > 1:
         df_mw[1].drop(context['period_str_col'], axis=1, inplace=True)
         df = pd.concat(df_mw, axis=1)
-
-    # pp.pprint(df)
 
     title = 'Results overall ({} - {})'.format(context['start_period_str'], context['end_period_str'])
     filename = "{}/Scores-overall".format(context['output_dir'])
@@ -584,9 +580,10 @@ def scoreLastPeriods2(context, db_con):
         query = "SELECT max({3}) as {3},{1} from {0} where {2}>=\'{4}\' and {2}<=\'{5}\' group by {2} order by {2} asc".format(
             tbl, qry_items_score[tbl], context['period_col'], context['period_str_col'], context['start_period'],
             context['end_period'])
+        logger.debug(query)
         df = db_con.execute(query).fetchdf()
 
-        pp.pprint(df)
+        logger.debug(df)
         # title = 'Results {} overall ({} - {})'.format(tbl, context['start_period_str'], context['end_period_str'])
         # filename = "{}/Scores-overall-{}".format(context['output_dir'], tbl)
         # p = createBarGraph(df, title=title, palette=paletteBR)
@@ -610,6 +607,7 @@ def scoreLastPeriod_type(context, db_con):
     for tbl in context['tables']:
         query = "SELECT max(md_{4}) as '{4}', {1} from {0} where {2}==\'{3}\' and md_{4}!='<unknown>' group by md_{4} order by md_{4} desc".format(
             tbl, qry_items_score[tbl], context['period_col'], context['end_period'], context['type'])
+        logger.debug(query)
         df_mw.append(db_con.execute(query).fetchdf())
 
     df = df_mw[0]
@@ -631,10 +629,7 @@ def scoreLastPeriod_type(context, db_con):
 
     # SPIDER PLOT
     print("\tCreating spider plot")
-    # if 'score(web)' in df.columns:
-    #     df.drop('score(web)', axis=1, inplace=True)
-    # if 'score(mail)' in df.columns:
-    #     df.drop('score(mail)', axis=1, inplace=True)
+
     title = "Results per {} ({})".format(context['type'], context['end_period_str'])
 
     createSpiderPlot(df, title=title, palette=paletteSector, fill=False)
@@ -678,6 +673,7 @@ def scoreLastPeriods_type(context, db_con):
                 tbl, qry_items_score[tbl], context['period_col'], context['period_str_col'], context['start_period'],
                 context['end_period'],
                 context['type'], metadata)
+            logger.debug(query)
             df_mw.append(db_con.execute(query).fetchdf())
 
         df = df_mw[0]
@@ -723,7 +719,7 @@ def complianceLastPeriod_type(context, db_con):
                 tbl, qry_items_score[tbl], context['type'], comp_items,
                 context['period_col'], context['period_str_col'], context['start_period'], context['end_period'],)
 
-            print(query)
+            logger.debug(query)
 
             df = db_con.execute(query).fetchdf()
 
@@ -761,6 +757,8 @@ def complianceLastPeriods_type(context, db_con):
                 tbl, qry_items_score[tbl], context['type'], comp_items,
                 context['period_col'], context['period_str_col'], context['start_period'], context['end_period'],)
 
+            logger.debug(query)
+
             df = db_con.execute(query).fetchdf()
             df = df.pivot(index=('sort', 'period'), columns=context['type'], values='compliant')
             df = df.reindex(context['type_vals'], axis=1)
@@ -793,6 +791,7 @@ def detailLastPeriod(context, db_con):
     for tbl in context['tables']:
         query = "SELECT {1} from {0} where {2}=\'{3}\' order by score desc, domain asc".format(
             tbl, qry_items_detail[tbl], context['period_col'], context['end_period'])
+        logger.debug(query)
         df = db_con.execute(query).fetchdf()
 
         title = 'Details {} ({})'.format(tbl, context['end_period_str'])
@@ -820,10 +819,12 @@ def deltaToPrevious(context, db_con):
     for tbl in context['tables']:
         query = "SELECT {1} from {0} where {2}=\'{3}\' order by domain asc".format(
             tbl, qry_items_detail[tbl], context['period_col'], context['prev_period'])
+        logger.debug(query)
         df1 = db_con.execute(query).fetchdf()
 
         query = "SELECT {1} from {0} where {2}=\'{3}\' order by domain asc".format(
             tbl, qry_items_detail[tbl], context['period_col'], context['end_period'])
+        logger.debug(query)
         df2 = db_con.execute(query).fetchdf()
 
         # Multiply everything but the score by 2 for the latest one
@@ -923,11 +924,13 @@ def deltaToPrevious_type(context, db_con):
             query = "SELECT {1} from {0} where {2}=\'{3}\' and md_{4}='{5}' order by domain asc".format(
                 tbl, qry_items_detail[tbl], context['period_col'], context['prev_period'],
                 context['type'], metadata)
+            logger.debug(query)
             df1 = db_con.execute(query).fetchdf()
 
             query = "SELECT {1} from {0} where {2}=\'{3}\' and md_{4}='{5}'order by domain asc".format(
                 tbl, qry_items_detail[tbl], context['period_col'], context['end_period'],
                 context['type'], metadata)
+            logger.debug(query)
             df2 = db_con.execute(query).fetchdf()
 
             # Multiply everything but the score by 2 for the latest one
@@ -953,19 +956,6 @@ def deltaToPrevious_type(context, db_con):
 
             # Now sort by score (descending), then domain (ascending)
             df.sort_values(by=['score', 'domain'], ascending=[False, True], inplace=True)
-
-            # # pp.pprint(df)
-            # # Find the top/bottom 3 and then extend with all rows with the same improvement/deterioration as the number 3
-            # # (otherwise nr. 4 may have same improvement as nr. 3, but be excluded on grounds of alphabetical ordering)
-            # top = 2  # first row is 0
-            # if df.iloc[top,0] > 0:
-            #     while df.iloc[top, 0] == df.iloc[top+1,0]:
-            #         top += 1
-            #
-            # bot = -3 # last row is -1
-            # if df.iloc[bot, 0] < 0:
-            #     while df.iloc[bot, 0] == df.iloc[bot-1,0]:
-            #         bot -= 1
 
             # Make domains a column again (otherwise Heatmap will fail)
             df.reset_index(level=0, inplace=True)
@@ -1001,6 +991,7 @@ def detailLastPeriod_type(context, db_con):
             query = "SELECT {1} from {0} where {2}=\'{3}\' and md_{4}='{5}' order by score desc, domain asc".format(
                 tbl, qry_items_detail[tbl], context['period_col'], context['end_period'],
                 context['type'], metadata)
+            logger.debug(query)
             df = db_con.execute(query).fetchdf()
 
             title = 'Details {} ({}, {})'.format(tbl, metadata, context['end_period_str'])
