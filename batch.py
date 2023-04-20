@@ -57,6 +57,7 @@ def parser_add_arguments():
                         \033[1m list\033[0m - list all or some of the batch requests 
                         \033[1m stat\033[0m - get the status of a specific request
                         \033[1m get\033[0m  - retrieve the results of a request
+                        \033[1m tec\033[0m  - retrieve the detailed/technical results of a request
                         \033[1m del\033[0m  - delete a request
 
                         '''),
@@ -100,7 +101,7 @@ def parser_add_arguments():
                         '''),
                         action="store",
                         # nargs="?",
-                        choices=["sub", "list", "stat", "get", "del", ],
+                        choices=["sub", "list", "stat", "get", "tec", "del", ],
                         # default="list")
                         )
 
@@ -108,9 +109,9 @@ def parser_add_arguments():
                         help=textwrap.dedent('''\
                         extra parameter for the request, type and meaning depend on the request:
                         
-                        \033[1msub\033[0m          (required): \033[1m{web|mail}\033[0m the type of measurement to submit
-                        \033[1mlist\033[0m         (optional): the number of items to list (default: 0 = all)
-                        \033[1mstat,get,del\033[0m (required): the request_id for the \033[1mstat,get or del\033[0m request
+                        \033[1msub\033[0m              (required): \033[1m{web|mail}\033[0m the type of measurement to submit
+                        \033[1mlist\033[0m             (optional): the number of items to list (default: 0 = all)
+                        \033[1mstat,get,tec,del\033[0m (required): the request_id for the \033[1mstat,get or del\033[0m request
                         '''))
 
     parser.add_argument("-d",
@@ -165,8 +166,10 @@ def parser_add_arguments():
                         const='',
                         metavar='SECTION',
                         help=textwrap.dedent('''\
-                        get the credentials from the specified \033[3m[SECTION]\033[0m in the configuration file 
-                        just the option without SECTION will prompt you for username and password
+                        get the credentials from the specified \033[3m[SECTION]\033[0m in the 'batch.conf' configuration
+                        file. Just the option without SECTION will prompt you for username and password.
+                        If a configuration file is present but no section is specified, then the first section from the
+                        file will be used.
                         '''))
 
     parser.add_argument("-v", "--verbose",
@@ -257,6 +260,9 @@ def call_API(action, credentials, request_id):
     elif action == 'get':
         r = requests.get(credentials['endpoint'] + '/' + request_id + '/results',
                          auth=(credentials['username'], credentials['password']))
+    elif action == 'tec':
+        r = requests.get(credentials['endpoint'] + '/' + request_id + '/results_technical',
+                         auth=(credentials['username'], credentials['password']))
     elif action == 'del':
         r = requests.patch(credentials['endpoint'] + '/' + request_id,
                            auth=(credentials['username'], credentials['password']))
@@ -297,7 +303,7 @@ def main():
     if args.n is not None:
         request_name = args.n
 
-    if action in ['stat', 'get', 'del']:
+    if action in ['stat', 'get', 'del', 'tec']:
         if parameter is None:
             print('Please specify a valid request_id')
             exit(2)
@@ -347,7 +353,7 @@ def main():
         exit(1)
 
     try:
-        if action == 'get':
+        if action == 'get' or action == 'tec':
             r = call_API('stat', credentials, request_id)
             if r.status_code == 200 or r.status_code == 201:
                 req_stat = r.json()['request']['status']
@@ -388,7 +394,7 @@ def main():
                 print()
         elif action == 'stat':
             pp.pprint(r.json()['request'])
-        elif action == 'get':
+        elif action == 'get' or action == 'tec':
             file = sys.stdout
             if args.o:
                 file = open(args.o, 'w')
