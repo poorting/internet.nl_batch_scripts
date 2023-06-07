@@ -779,6 +779,52 @@ def complianceLastPeriods_type(context, db_con):
 
 
 # ------------------------------------------------------------------------------
+def complianceLastPeriods(context, db_con):
+
+    pp = pprint.PrettyPrinter(indent=4)
+
+    print("Compliance latest periods overall({}-{})".format(
+        context['start_period_str'], context['end_period_str']))
+
+    i = 0
+    dfs = None
+    for tbl in context['tables']:
+        for name, comp_items in qry_items_compliance[tbl].items():
+            print(f"\t{name}")
+
+            query = "SELECT {4} as sort, {5} as period, "\
+                    "round(100.0*(select count(*) from {0} where {5}=period and {3})/"\
+                    "(select count(*) from {0} where {5}=period)) as compliant "\
+                    "from {0} where {4}>={6} and {4}<={7} group by all order by {4} asc".format(
+                tbl, qry_items_score[tbl], context['type'], comp_items,
+                context['period_col'], context['period_str_col'], context['start_period'], context['end_period'],)
+
+            logger.debug(query)
+
+            df = db_con.execute(query).fetchdf()
+            # Rename compliant column to the topic at hand
+            df.rename(columns={'compliant': name}, inplace=True)
+            if i == 0:
+                dfs = df
+                i += 1
+            else:
+                dfs[name] = df[name]
+
+    df = dfs
+    df.drop('sort', axis=1, inplace=True)
+
+    title = 'Compliancy overall ({} - {})'.format(context['start_period_str'], context['end_period_str'])
+    filename = "{}/Compliance-history-overall".format(context['output_dir'])
+    if context['export_xlsx']:
+        context['dataframes']["Compliance-hist-overall"] = df
+    p = createBarGraph(df, title=title, palette=type_palettes[0])
+
+    plt.savefig(filename + '.svg', bbox_inches='tight')
+    plt.savefig(filename + '.png', bbox_inches='tight')
+    plt.close()
+
+
+# ------------------------------------------------------------------------------
 def detailLastPeriod(context, db_con):
     pp = pprint.PrettyPrinter(indent=4)
 
@@ -1177,6 +1223,7 @@ def main():
         deltaToPrevious_type(context, con)
 
     complianceLastPeriod_type(context, con)
+    complianceLastPeriods(context, con)
     complianceLastPeriods_type(context, con)
 
     con.close()
