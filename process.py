@@ -305,7 +305,7 @@ def main():
         if not domainsFile == '':
             # Check if it exists first
             if os.path.isfile(domainsFile):
-                domains = pd.read_excel(domainsFile, sheet_name=0, engine='openpyxl')
+                domains = pd.read_excel(domainsFile, sheet_name=sheet_name, engine='openpyxl')
     except Exception as e:
         logger.error("error processing domains Excel file: {}".format(e))
         exit(1)
