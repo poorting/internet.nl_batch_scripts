@@ -715,7 +715,7 @@ def complianceLastPeriod_type(context, db_con):
                     "round(100.0*(select count(*) from {0} where {4}={7} and md_{2}={2} and {3})/"\
                     "(select count(*) from {0} where {4}={7} and md_{2}={2})) as compliant "\
                     "from {0} where md_{2}!='<unknown>' "\
-                    "and {4}={7} group by all order by md_{2} desc, {4} asc".format(
+                    "and {4}={7} group by md_{2} order by md_{2} desc".format(
                 tbl, qry_items_score[tbl], context['type'], comp_items,
                 context['period_col'], context['period_str_col'], context['start_period'], context['end_period'],)
 
@@ -753,7 +753,7 @@ def complianceLastPeriods_type(context, db_con):
                     "round(100.0*(select count(*) from {0} where {5}=period and md_{2}={2} and {3})/"\
                     "(select count(*) from {0} where {5}=period and md_{2}={2})) as compliant "\
                     "from {0} where md_{2}!='<unknown>' "\
-                    "and {4}>={6} and {4}<={7} group by all order by md_{2} desc, {4} asc".format(
+                    "and {4}>={6} and {4}<={7} group by sort, period, md_{2} order by md_{2} desc, {4} asc".format(
                 tbl, qry_items_score[tbl], context['type'], comp_items,
                 context['period_col'], context['period_str_col'], context['start_period'], context['end_period'],)
 
@@ -795,13 +795,14 @@ def complianceLastPeriods(context, db_con):
             query = "SELECT {4} as sort, {5} as period, "\
                     "round(100.0*(select count(*) from {0} where {5}=period and {3})/"\
                     "(select count(*) from {0} where {5}=period)) as compliant "\
-                    "from {0} where {4}>={6} and {4}<={7} group by all order by {4} asc".format(
+                    "from {0} where {4}>={6} and {4}<={7} group by sort, period order by {4} asc".format(
                 tbl, qry_items_score[tbl], context['type'], comp_items,
                 context['period_col'], context['period_str_col'], context['start_period'], context['end_period'],)
 
             logger.debug(query)
 
             df = db_con.execute(query).fetchdf()
+
             # Rename compliant column to the topic at hand
             df.rename(columns={'compliant': name}, inplace=True)
             if i == 0:
