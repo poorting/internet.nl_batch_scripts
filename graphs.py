@@ -946,7 +946,7 @@ def deltaToPrevious(context, db_con):
         df = df2.subtract(df1)
         # domains without a previous score will have an N/A score
         # at this point, fill it with a zero
-        df['score'].fillna(0, inplace=True)
+        df['score'] = df['score'].fillna(0)
         df = df.astype({"score": int})
 
         # Now sort by score (descending), then domain (ascending)
@@ -1049,7 +1049,8 @@ def deltaToPrevious_type(context, db_con):
             df2.score = round(df2.score / 2)
             df2 = df2.astype({"score": int})
             df = df2.subtract(df1)
-            df['score'].fillna(0, inplace=True)
+            # df['score'].fillna(0, inplace=True)
+            df['score'] = df['score'].fillna(0)
             df = df.astype({"score": int})
 
             # Now sort by score (descending), then domain (ascending)
