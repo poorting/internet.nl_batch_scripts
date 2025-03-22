@@ -1,9 +1,0 @@
-[prod]
-username = example_username
-password = example_password
-
-[dev]
-endpoint = https://batch.dev.internet.nl/api/batch/v2/openapi.yaml
-username = example_username
-password = example_password
-
